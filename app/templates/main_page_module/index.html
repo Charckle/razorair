@@ -445,9 +445,13 @@
   };
 
   
+  
 
   window.onload = function() {
     update_data();
+
+    setInterval(hvac_data, 10000);
+    setInterval(home_data, 300000);
   };
 </script>
 

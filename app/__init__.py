@@ -68,18 +68,24 @@ logo_ascii = r"""
                                                                        |___/           
 ------------------+
 """
-app.logger.info(r"---------------------------+")    
-app.logger.info(r"  _______        _   _    _                   __  __                                   ")    
-app.logger.info(r" |__   __|      | | | |  | |                 |  \/  |                                  ")    
-app.logger.info(r"    | |_ __ ___ | |_| |__| |_   ____ _  ___  | \  / | __ _ _ __   __ _  __ _  ___ _ __ ")    
-app.logger.info(r"    | | '__/ _ \| __|  __  \ \ / / _` |/ __| | |\/| |/ _` | '_ \ / _` |/ _` |/ _ \ '__|")    
-app.logger.info(r"    | | | | (_) | |_| |  | |\ V / (_| | (__  | |  | | (_| | | | | (_| | (_| |  __/ |   ")    
-app.logger.info(r"    |_|_|  \___/ \__|_|  |_| \_/ \__,_|\___| |_|  |_|\__,_|_| |_|\__,_|\__, |\___|_|   ")    
-app.logger.info(r"                                                                        __/ |          ")    
-app.logger.info(r"                                                                       |___/           ")    
-app.logger.info(r"------------------+")    
 
-app.logger.info("Trot Hvac Web Manager: Web Manager for controlling a Systemair machine")    
+logo_ascii = r"""
+---------------------------+
+_____                            _      
+|  __ \                     /\   (_)     
+| |__) |__ _ _______  _ __ /  \   _ _ __ 
+|  _  // _` |_  / _ \| '__/ /\ \ | | '__|
+| | \ \ (_| |/ / (_) | | / ____ \| | |   
+|_|  \_\__,_/___\___/|_|/_/    \_\_|_|   
+------------------+
+"""
+
+logo = logo_ascii.split("\n")
+for line in logo:
+    app.logger.info(line)  
+
+
+app.logger.info("RazorAir: A smart home commander")    
 app.logger.info(f"Version: {Randoms.get_version()}")    
 app.logger.info("--------------------------------------------+ \n")    
 app.logger.info(f"Logging Level: {logging.getLevelName(app.logger.getEffectiveLevel())}")
