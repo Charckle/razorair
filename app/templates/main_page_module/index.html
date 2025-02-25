@@ -1,0 +1,455 @@
+{% extends "main_page_module/base.html" %}
+
+{% block extraheader %}
+{% endblock extraheader  %}
+
+{% block nav_index %}text-secondary{% endblock nav_index %}
+
+
+
+{% block content%}
+
+  <div class="container-fluid" >
+    <br>
+    <div class="row">
+      <div class="col-sm-3">
+        <table class="table">
+          <tbody>
+            <tr>
+              <th scope="row">Rekuperator</th>
+              <td><span class="badge text-bg-secondary">Ne deluje</span></td>
+            </tr>
+            <tr>
+              <th scope="row">Grelec</th>
+              <td><span class="badge text-bg-success">Deluje</span></td>
+            </tr>
+            <tr>
+              <th scope="row">Centralna</th>
+              <td><span class="badge text-bg-success">Deluje</span></td>
+            </tr>
+            <tr>
+              <th scope="row">Električna tarifa</th>
+              <td><span class="badge text-bg-danger">Visoka</span><span class="badge text-bg-secondary">Še 3h</span></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <table class="table">
+          <tbody>
+            <tr>
+              <th rowspan="2" class="text-center align-middle"><img id="home_icon" style="height: 80px;" src="/static/main_page_module/icons/weather/fill/not-available.svg" alt=""></th>
+              <th scope="col"><i class="bi bi-house-fill"></i> Notranja temperatura</th>
+              <th scope="col"><i class="bi bi-cloud"></i> Zunanja temperatura</th>
+            </tr>
+            <tr>
+              <td><span id="inhouse_t"></span>°C</td>
+              <td><span id="outside_t"></span>°C</td>
+            </tr>
+
+          </tbody>
+        </table>
+
+
+      </div>
+      
+      
+      <div class="col-sm-6">
+        <legend>Opozorila</legend>
+        <hr>
+
+        <div class="list-group">
+          <a href="#" class="list-group-item list-group-item-action list-group-item-warning"><i class="bi bi-exclamation-triangle-fill"></i> <i class="bi bi-snow2"></i> - V naslednjih 24 urah bo temperatura pod 0°</a>
+        </div>
+        
+      </div>
+
+
+        
+      <div class="col-sm-3">
+        <h5>Željena temperatura</h5>
+
+        <div class="input-group">
+          <button class="btn btn-outline-primary  btn-lg" type="button" id="minusBtn"  style="flex-basis: 30%;"><img style="max-height: 50px;" src="http://127.0.0.1:5000/static/main_page_module/icons/weather/fill/thermometer-colder.svg" alt=""></button>
+          <input type="number" class="form-control text-center" id="req_t" value="22" min="12" max="30" readonly style="flex-basis: 40%;">
+          <button class="btn btn-outline-danger  btn-lg" type="button" id="plusBtn"  style="flex-basis: 30%;"><img style="max-height: 50px;" src="http://127.0.0.1:5000/static/main_page_module/icons/weather/fill/thermometer-warmer.svg" alt=""></button>
+        </div>
+        
+
+        <script>
+          // Get the elements
+          const minusBtn = document.getElementById('minusBtn');
+          const plusBtn = document.getElementById('plusBtn');
+          const temperatureInput = document.getElementById('req_t');
+        
+          // Set increment and decrement functions
+          minusBtn.addEventListener('click', () => {
+            const currentTemp = parseInt(temperatureInput.value);
+            if (currentTemp > temperatureInput.min) {
+              temperatureInput.value = currentTemp - 1;
+            }
+            set_hvac_vent_temp();
+          });
+        
+          plusBtn.addEventListener('click', () => {
+            const currentTemp = parseInt(temperatureInput.value);
+            if (currentTemp < temperatureInput.max) {
+              temperatureInput.value = currentTemp + 1;
+            }
+            set_hvac_vent_temp();
+          });
+        </script>
+
+<br>
+        <h5>Ventilacija</h5>
+
+        <div class="input-group">
+          <button class="btn btn-outline-danger btn-lg" type="button" id="minusBtn_vnt" style="flex-basis: 30%;">
+              <img style="max-height: 50px;" src="http://127.0.0.1:5000/static/main_page_module/icons/weather/fill/wind-beaufort-1.svg" alt="">
+          </button>
+          
+          <input type="text" class="form-control text-center" id="speedInput" value="Stopped" readonly style="flex-basis: 40%;">
+      
+          <button class="btn btn-outline-success btn-lg" type="button" id="plusBtn_vnt" style="flex-basis: 30%;">
+              <img style="max-height: 50px;" src="http://127.0.0.1:5000/static/main_page_module/icons/weather/fill/wind-beaufort-12.svg" alt="">
+          </button>
+      </div>
+
+      <script>
+        // Define the available options
+        const speedLevels = [
+            { text: "Stopped", value: 0 },
+            { text: "Slow", value: 2 },
+            { text: "Medium", value: 3 },
+            { text: "Max", value: 4 }
+        ];
+    
+        let currentVent_speedIndex = 0; // Default to "Stopped"
+    
+        const speedInput = document.getElementById("speedInput");
+        const minusBtn_vnt = document.getElementById("minusBtn_vnt");
+        const plusBtn_vnt = document.getElementById("plusBtn_vnt");
+    
+        function updateVentSpeedDisplay() {
+            speedInput.value = speedLevels[currentVent_speedIndex].text;
+            speedInput.dataset.value = speedLevels[currentVent_speedIndex].value; // Store numeric value in data attribute
+        }
+    
+        minusBtn_vnt.addEventListener("click", function () {
+            if (currentVent_speedIndex > 0) {
+              currentVent_speedIndex--;
+                updateVentSpeedDisplay();
+                set_hvac_vent_temp();
+            }
+        });
+    
+        plusBtn_vnt.addEventListener("click", function () {
+            if (currentVent_speedIndex < speedLevels.length - 1) {
+              currentVent_speedIndex++;
+                updateVentSpeedDisplay();
+                set_hvac_vent_temp();
+            }
+        });
+    
+        updateVentSpeedDisplay(); // Set initial value
+    </script>
+    
+
+        
+        
+      </div>
+    </div>
+
+    <div class="row">
+      {% set weather_obj = Open_W_obj(45.533421368837615, 13.727852449587754) %}
+
+      <div class="card">
+        <div id="hourly_table_div" class="card-body">
+          <div class="table-responsive">
+            <table class="table table-borderless">
+              {% set weadays = weather_obj.hourly_object() %}
+              <tbody class="text-center">
+
+                <tr>
+                  {% for date_, wd in weadays.items() %}
+                  <td style="background-color:rgb(139, 201, 240)"><img style="max-height: 50px;" src="{{ wd['icon'] }}" alt=""></td>
+                  {% endfor %}
+                </tr>
+                <tr>
+                  {% for date_, wd in weadays.items() %}
+                  <td style="background-color:rgb(125, 177, 207)">{{ wd['temp'] }}°</td>
+                  {% endfor %}
+                </tr>
+                <tr>
+                  {% for date_, wd in weadays.items() %}
+                  <td style="background-color:rgb(47, 131, 180); color:beige">{{ Pylavor.datetime_to_string_time(date_, date_=False,seconds=False) }}</td>
+                  {% endfor %}
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="row">
+      <div class="col-sm-12">
+
+          <h5>Koper</h5>
+
+              {% set weadays = weather_obj.daily_object(max_hits=12) %}
+
+              <div id="home_weather" class="row">
+              {% for date_, wd in weadays.items() %}
+                <div class="col-sm-1">
+                  <div class="card">
+                    <div class="card-body text-center">
+                      <p class="card-text">{{ wd['day_name'] }}</p>
+                      <img style="max-height: 80px;" src="{{ wd['icon'] }}" alt="">
+                      <p class="card-text"><span style="color:rgb(113, 161, 201)">{{ wd['temp_min'] }}°</span> - <span style="color:rgb(226, 96, 96)">{{ wd['temp_max'] }}°</span</p>
+                    </div>
+                  </div>
+                </div>
+              {% endfor %}
+             </div>
+
+
+
+      </div>
+    </div>
+
+  </div>
+
+
+<script>
+  function update_data(){
+    home_data();
+    hvac_data();
+  }
+
+  function set_home_data(home_data) {
+    var current = home_data["current"];
+    var hourly = home_data["hourly"];
+    var daily = home_data["daily"];
+
+
+    // set tempetrature
+    //var inhouse_t = document.getElementById("inhouse_t");
+    //var outside_t = document.getElementById("outside_t");
+    //inhouse_t.innerHTML = current["inhouse_t"];
+    //outside_t.innerHTML = current["outside_t"];
+
+    // icon
+    var home_icon = document.getElementById("home_icon");
+    home_icon.src = current["icon"];
+
+    createHourlyTable(hourly);
+    createDailycards(daily);
+
+
+  }
+
+  function set_hvac_data(hvac_data) {
+    var daily = hvac_data["daily"];
+
+
+    // set tempetrature
+    var inhouse_t = document.getElementById("inhouse_t");
+    var outside_t = document.getElementById("outside_t");
+    inhouse_t.innerHTML = hvac_data["outtake_temp"];
+    outside_t.innerHTML = hvac_data["outside_temp"];
+
+    // set user set temperature
+    var req_t = document.getElementById("req_t");
+    req_t.value = hvac_data["user_set_temp"];
+
+    // set ventilation speed
+    user_set_ventilation = hvac_data["user_set_ventilation"];
+    currentVent_speedIndex = speedLevels.findIndex(level => level.value === user_set_ventilation);
+
+    updateVentSpeedDisplay();
+  }
+
+  function createHourlyTable(hourly) {
+    // empty the div
+    var hourly_table_div = document.getElementById("hourly_table_div");
+    hourly_table_div.innerHTML = "";
+
+    // table div
+    var table_div = document.createElement('div');
+    table_div.className = "table-responsive";
+    hourly_table_div.appendChild(table_div);
+
+
+    // table element
+    var table = document.createElement('table');
+    table.className = "table table-borderless";
+    table_div.appendChild(table);
+
+    // body
+    var tbody = document.createElement('tbody');
+    tbody.className = "text-center";
+    table.appendChild(tbody);
+
+    
+
+
+
+    var icon_row = document.createElement('tr');
+    tbody.appendChild(icon_row);
+
+
+    // fill icons
+    //console.log(hourly);
+
+    for (let [date_, wd] of Object.entries(hourly)){
+        var header1 = document.createElement('th');
+        if (wd["day"] == true) {
+          var style = "background-color:rgb(139, 201, 240); color:beige";
+        } else {
+          var style = "background-color:rgb(76, 135, 172); color:beige";
+        }
+        header1.style = style;
+        icon_row.appendChild(header1);
+
+        var icon = document.createElement('img');
+        icon.style = "max-height: 50px;";
+        icon.src = wd['icon'];
+
+        header1.appendChild(icon);
+
+
+    }
+
+    var temp_row = document.createElement('tr');
+    tbody.appendChild(temp_row);
+
+    for (let [date_, wd] of Object.entries(hourly)){
+        var header1 = document.createElement('td');
+        header1.style = "background-color:rgb(125, 177, 207)";
+        header1.innerHTML = wd['temp'] + "°";
+
+        temp_row.appendChild(header1);
+    }
+
+    var date_row = document.createElement('tr');
+    tbody.appendChild(date_row);
+
+    for (let [date_, wd] of Object.entries(hourly)){
+        var header1 = document.createElement('td');
+
+        if (wd["day"] == true) {
+          var style = "background-color:rgb(47, 131, 180); color:beige";
+        } else {
+          var style = "background-color:rgb(56, 99, 126); color:beige";
+        }
+        header1.style = style;
+        header1.innerHTML = date_.split('T')[1];
+
+        date_row.appendChild(header1);
+    }
+
+  }
+
+  function createDailycards(daily) {
+    var home_weather_div = document.getElementById("home_weather");
+    home_weather_div.innerHTML = "";
+
+    for (let [date_, wd] of Object.entries(daily)){
+      var row_col = document.createElement('div');
+      row_col.className = "col-sm-1";
+      home_weather_div.appendChild(row_col);
+
+      var day_card = document.createElement('div');
+      day_card.className = "card";
+      row_col.appendChild(day_card);
+
+      var day_card_body = document.createElement('div');
+      day_card_body.className = "card-body text-center";
+      day_card.appendChild(day_card_body);
+
+      var day_name = document.createElement('p');
+      day_name.className = "card-text";
+      day_name.innerHTML = wd['day_name'];
+      day_card_body.appendChild(day_name);
+
+      var day_image = document.createElement('img');
+      day_image.style = "max-height: 80px;";
+      day_image.src = wd['icon'];
+      day_card_body.appendChild(day_image);
+
+      var day_temp = document.createElement('p');
+      day_temp.className = "card-text";
+      day_card_body.appendChild(day_temp);
+
+      var day_temp_min = document.createElement('span');
+      day_temp_min.style = "color:rgb(113, 161, 201)";
+      day_temp_min.innerHTML = wd['temp_min'] + "°";
+      day_temp.appendChild(day_temp_min);
+
+      day_temp.innerHTML += " - ";
+
+      var day_temp_max = document.createElement('span');
+      day_temp_max.style = "color:rgb(226, 96, 96)";
+      day_temp_max.innerHTML = wd['temp_max'] + "°";
+      day_temp.appendChild(day_temp_max);
+    }
+
+
+  }
+
+  function home_data(){
+
+    $.get("{{ url_for('hvac_api.weather_home') }}", {}, function(data, textStatus, jqXHR) {
+      //console.log(data["a"]);
+
+      if (jqXHR.status == 200){
+        set_home_data(data);
+
+
+      } else {
+        console.log("Error getting home data.");
+      }      
+
+    }, "json");
+
+  };
+
+  function set_hvac_vent_temp(){
+      var r_temp = document.getElementById("req_t").value;
+      var r_vent = document.getElementById("speedInput").dataset.value;
+
+      $.post("{{ url_for('hvac_api.hvac_data_set_vet_r_tmp') }}", {"user_set_temp": r_temp, "user_set_ventilation": r_vent}, function(data, textStatus) {
+
+      }, "json");
+
+    };
+
+
+
+  function hvac_data(){
+
+    $.get("{{ url_for('hvac_api.hvac_data_get') }}", {}, function(data, textStatus, jqXHR) {
+      //console.log(data["a"]);
+
+      if (jqXHR.status == 200){
+        set_hvac_data(data);
+
+
+      } else {
+        console.log("Error getting home data.");
+      }      
+
+    }, "json");
+
+  };
+
+  
+
+  window.onload = function() {
+    update_data();
+  };
+</script>
+
+
+{% endblock content %}

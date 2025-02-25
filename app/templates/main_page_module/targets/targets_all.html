@@ -1,0 +1,43 @@
+{% extends "main_page_module/base.html" %}
+
+{% block extraheader %}
+{% endblock extraheader  %}
+
+{% block nav_all_t %}text-secondary{% endblock nav_all_t %}
+
+
+
+{% block content%}
+
+  <div class="container-fluid" >
+    <br>
+
+    <div class="row">
+      <div class="col-sm-1">        
+      </div>
+      <div class="col-sm-10">
+        <h3>Vsi naslovniki <a href="{{ url_for('main_page_module.targets_new') }}" class="btn btn-outline-primary btn-sm" >Nov naslovnik</a></h3>
+        
+
+        <hr>
+        
+        <ul class="list-group">
+          {% for target in all_targets %}
+
+            <a href="{{ url_for('main_page_module.targets_edit', target_index=loop.index0) }}" class="list-group-item list-group-item-action">{{ target["name"] }} 
+              <i class="bi bi-people-fill"></i> - {% if target["active"] != 0 %}<span class="badge rounded-pill bg-success"><i class="bi bi-check-circle"></i> Aktiven</span>
+              {% else %}
+              <span class="badge rounded-pill bg-danger"></i> Neaktiven</span>
+              {% endif %}
+            </a>
+
+          {% endfor %}
+        </ul>
+
+      </div>
+      <div class="col-sm-1">
+      </div>
+    </div>
+  </div>
+
+{% endblock content %}

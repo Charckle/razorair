@@ -1,0 +1,79 @@
+{% extends "main_page_module/base.html" %}
+
+{% block extraheader %}
+{% endblock extraheader  %}
+
+{% block nav_all_t %}text-secondary{% endblock nav_all_t %}
+
+
+
+{% block content%}
+
+
+{% macro render_field(field, placeholder=None) %}
+  <div class="mb-3">
+      {% set css_class = 'form-control ' + kwargs.pop('class', '') %}
+
+      {{ field.label }}
+
+      {% if field.errors %}
+          {% set css_class = css_class + ' is-invalid' %}
+
+          {% for error in field.errors %}
+              
+              <small id="{{ field.label.text }}" class="text-danger">
+                  {{ error }}
+            </small>
+
+          {% endfor %}
+          </ul>
+      {% endif %}
+
+      {{ field(class=css_class, autocomplete="off", placeholder=placeholder, **kwargs) }}
+  </div>
+{% endmacro %}
+
+
+
+  <div class="container-fluid" >
+    <br>
+    <div class="row">
+      <div class="col-sm-2">
+      </div>
+      <div class="col-sm-8">
+        
+        <form method="POST" action="{{ url_for('main_page_module.targets_new') }}" accept-charset="UTF-8" role="form">
+          {{ form.csrf_token }}
+          <input type="hidden" id="target_index" name="target_index" value="999">
+
+          
+          <div class="row">
+            <div class="col-md-4">
+              {{ render_field(form.name, placeholder="Ime Instance") }}
+            </div>
+            <div class="col-md-4">
+              {{ render_field(form.email, placeholder="Email administratorja") }}
+            </div>
+            <div class="col-md-2">
+            </div>
+            <div class="col-md-2">
+              {{ render_field(form.active, class="form-select") }}
+            </div>
+            
+          </div>
+
+
+          
+          <div class="form-group">
+            {{ form.submit(class="form-control btn btn-dark mb-2") }}
+            </div>
+        </form>
+
+
+      </div>
+      <div class="col-sm-2">
+      </div>
+    </div>
+  </div>
+
+{% endblock content %}

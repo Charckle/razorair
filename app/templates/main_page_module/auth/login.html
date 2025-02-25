@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Centered Login Window</title>
+  <link href="{{ url_for('static', filename='main_page_module/bootstrap/css/bootstrap.min.css') }}" rel="stylesheet">
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='favicon.ico') }}">
+
+  <style>
+    /* Custom styles to ensure full-height centering */
+    body, html {
+      height: 100%;
+    }
+
+    .login-container {
+      min-height: 100vh; /* Ensures the container takes full height */
+    }
+  </style>
+</head>
+
+{% macro render_field(field, placeholder=None) %}
+  <div class="mb-3">
+      {% set css_class = 'form-control ' + kwargs.pop('class', '') %}
+
+      {{ field.label }}
+
+      {% if field.errors %}
+          {% set css_class = css_class + ' is-invalid' %}
+
+          {% for error in field.errors %}
+              
+              <small id="{{ field.label.text }}" class="text-danger">
+                  {{ error }}
+            </small>
+
+          {% endfor %}
+          </ul>
+      {% endif %}
+
+      {{ field(class=css_class,  autocomplete="off", placeholder=placeholder, **kwargs) }}
+  </div>
+{% endmacro %}
+
+<body>
+
+  <!-- Full page wrapper with vertical centering -->
+  <div class="container login-container d-flex align-items-center justify-content-center">
+    <div class="card p-4 shadow-lg" style="width: 100%; max-width: 400px;">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div>
+          {% for category, message in messages %}
+            {% if category == "error" %}
+              <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+              </div>
+            {% else %}
+              <div class="alert alert-success alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+              </div>
+            {% endif %}
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+      <h3 class="text-center mb-4">Login</h3>
+      <!-- Login Form -->
+      <form method="POST" href="{{ url_for('main_page_module.login') }}" accept-charset="UTF-8" role="form">
+        {{ form.csrf_token }}
+
+        <div class="mb-3">
+            {{ render_field(form.username_or_email, placeholder="Username or email", autofocus="") }}
+        </div>
+        <div class="mb-3">
+            {{ render_field(form.password, placeholder="Password") }}
+        </div>
+        <button type="submit" class="btn btn-primary w-100">Login</button>
+      </form>
+
+      <div class="text-center mt-3">
+        <a href="#">Forgot your password?</a>
+      </div>
+    </div>
+  </div>
+
+<!-- Bootstrap JS and dependencies -->
+<script src="{{ url_for('static', filename='main_page_module/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
+<script src="{{ url_for('static', filename='main_page_module/jquerry/jquery-3.5.1.min.js') }}"></script></body>
+</html>

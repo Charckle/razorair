@@ -1,0 +1,103 @@
+{% extends "main_page_module/base.html" %}
+
+{% block extraheader %}
+{% endblock extraheader  %}
+
+{% block nav_all_t %}text-secondary{% endblock nav_all_t %}
+
+
+
+{% block content%}
+
+
+{% macro render_field(field, placeholder=None) %}
+  <div class="mb-3">
+      {% set css_class = 'form-control ' + kwargs.pop('class', '') %}
+
+      {{ field.label }}
+
+      {% if field.errors %}
+          {% set css_class = css_class + ' is-invalid' %}
+
+          {% for error in field.errors %}
+              
+              <small id="{{ field.label.text }}" class="text-danger">
+                  {{ error }}
+            </small>
+
+          {% endfor %}
+          </ul>
+      {% endif %}
+
+      {{ field(class=css_class, autocomplete="off", placeholder=placeholder, **kwargs) }}
+  </div>
+{% endmacro %}
+
+
+
+  <div class="container-fluid" >
+    <br>
+    <div class="row">
+      <div class="col-sm-2">
+      </div>
+      <div class="col-sm-8">
+        
+        <form method="POST" action="{{ url_for('main_page_module.targets_edit') }}" accept-charset="UTF-8" role="form">
+          {{ form.csrf_token }}
+          {{ form.target_index }}
+          
+          <div class="row">
+            <div class="col-md-4">
+              {{ render_field(form.name, placeholder="Ime Instance") }}
+            </div>
+            <div class="col-md-4">
+              {{ render_field(form.email, placeholder="Email administratorja") }}
+            </div>
+            <div class="col-md-2">
+            </div>
+            <div class="col-md-2">
+              {{ render_field(form.active, class="form-select") }}
+            </div>
+            
+          </div>
+
+
+          
+          <div class="form-group">
+            {{ form.submit(class="form-control btn btn-dark mb-2") }}
+            </div>
+        </form>
+
+
+      </div>
+      <div class="col-sm-2">
+        <!-- Button trigger modal -->
+        <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteEvent">
+          Zbriši naslovnika
+        </button>
+
+        <!-- Modal -->
+        <div class="modal fade" id="deleteEvent" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">Zbriši naslovnika?</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
+              <div class="modal-body">
+                Zbriši naslovnika: {{ form.name.data}} ?
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <a class="btn btn-danger" href="{{ url_for('main_page_module.targets_delete', target_index=form.target_index.data) }}" role="button">Zbriši</a>
+
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+{% endblock content %}
