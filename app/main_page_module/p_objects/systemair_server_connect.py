@@ -21,7 +21,8 @@ class Sasc:
         t_data = None
         
         try:
-            url = f"http://{self.server_ip}" + "/mread?{%223021%22:1,%2211000%22:7,%2211100%22:6,%2211200%22:6,%2212100%22:8,%2212135%22:1,%2212150%22:6,%2212160%22:6,%2212400%22:2,%2212542%22:1,%2212543%22:1,%222000%22:1,%221130%22:1}"
+            url = f"http://{self.server_ip}" + "/mread?{%223021%22:1,%2211000%22:7,%2211100%22:6,%2211200%22:6,%2212100%22:8,%2212135%22:1,%2212150%22:6,%2212160%22:6,%2212400%22:2,%2212542%22:1,%2212543%22:1,%222000%22:1,%221130%22:1,%222148%22:1, %224101%22:1,%2213310%22:5}"
+            #url = f"http://{self.server_ip}" + "/mread?{%223021%22:1,%2211000%22:7,%2211100%22:6,%2211200%22:6,%2212100%22:8,%2212135%22:1,%2212150%22:6,%2212160%22:6,%2212400%22:2,%2212542%22:1,%2212543%22:1,%222000%22:1,%221130%22:1,%222148%22:1, %224101%22:1,%2213310%22:5}"
             response = requests.get(url, timeout=5)  # You can adjust the timeout as needed
             response.raise_for_status()  # Raises HTTPError for bad responses (4xx or 5xx)
             #print(response.text)  # Handle the response here
@@ -43,6 +44,7 @@ class Sasc:
         #print(t_data.status_code)
         if t_data != None:
             data_json = t_data.json()
+
             temp_dict["outtake_temp"] = Sasc.get_right_temp(data_json["12543"])  # temp of the air exiting the rooms via the ducts
             temp_dict["outside_temp"] = Sasc.get_right_temp(data_json["12101"])
             temp_dict["intake_temp"] = Sasc.get_right_temp(data_json["12102"])   # temp of the air going into the supply ducts
@@ -52,6 +54,8 @@ class Sasc:
             temp_dict["extract_fan_rpm"] = data_json["12401"]
             temp_dict["user_set_temp"] = Sasc.get_right_temp(data_json["2000"])
             temp_dict["user_set_ventilation"] = data_json["1130"]
+            temp_dict["heater_percentage"] = data_json["2148"]
+            temp_dict["heat_echanger_percentage"] = data_json["13310"]
         
         return temp_dict
     

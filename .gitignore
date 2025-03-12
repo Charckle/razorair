@@ -1,0 +1,14 @@
+__pycache__/
+*.pyc
+*.exe
+database.db
+to-do.txt
+.vs
+.index/
+logs/
+*.log
+.env
+
+app/files_u/*
+# exception to the rule
+!app/files_u/.gitkeep 

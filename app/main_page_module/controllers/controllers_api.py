@@ -40,12 +40,12 @@ def inject_to_every_page():
 
 
 @hvac_api.route('/hvac_data_get', methods=['GET'])
-#@login_required
+@login_required
 def hvac_data_get():
     data_ = {}
     
     try:
-        hvac_obj = Sasc("192.168.0.111")
+        hvac_obj = Sasc(app.config['SYSTEMAIR_SERVER'])
         hvac_data = hvac_obj.hvac_data()
         
         req_temperature = 24
@@ -71,7 +71,7 @@ def hvac_data_get():
         return "Error", 500
     
 @hvac_api.route('/hvac_data_get', methods=['POST'])
-#@login_required
+@login_required
 def hvac_data_set_vet_r_tmp():
     user_set_temp = request.form["user_set_temp"]
     user_set_ventilation = request.form["user_set_ventilation"]
@@ -103,7 +103,7 @@ def hvac_data_set_vet_r_tmp():
 
 
 @hvac_api.route('/weather_home', methods=['GET'])
-#@login_required
+@login_required
 def weather_home():
     data_ = {}
     
@@ -137,7 +137,7 @@ def weather_home():
 
 
 @hvac_api.route('/weather/<lat>/<long>', methods=['GET'])
-#@login_required
+@login_required
 def weather(lat,long):
     # http://127.0.0.1:5000/api/weather/45.533421368837615/13.727852449587754
     #weather_obj = Open_W_obj(45.533421368837615, 13.727852449587754) 

@@ -40,9 +40,9 @@ def inject_to_every_page():
 
 
 @main_page_module.route('/', methods=['GET'])
-#@login_required
+@login_required
 def index():
-
+    
     return render_template("main_page_module/index.html", Open_W_obj=Open_W_obj)
 
 

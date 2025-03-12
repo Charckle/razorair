@@ -17,15 +17,15 @@
           <tbody>
             <tr>
               <th scope="row">Rekuperator</th>
-              <td><span class="badge text-bg-secondary">Ne deluje</span></td>
+              <td><span id="exchangerbadge" class="badge text-bg-secondary">Ne deluje</span></td>
             </tr>
             <tr>
               <th scope="row">Grelec</th>
-              <td><span class="badge text-bg-success">Deluje</span></td>
+              <td><span id="heaterbadge" class="badge text-bg-secondary">Ne deluje</span></td>
             </tr>
             <tr>
               <th scope="row">Centralna</th>
-              <td><span class="badge text-bg-success">Deluje</span></td>
+              <td><span class="badge text-bg-dark">N/I</span></td>
             </tr>
             <tr>
               <th scope="row">Električna tarifa</th>
@@ -268,6 +268,8 @@
     currentVent_speedIndex = speedLevels.findIndex(level => level.value === user_set_ventilation);
 
     updateVentSpeedDisplay();
+    updateHeaterBadge(hvac_data["heater_percentage"])
+    updateExchangerBadge(hvac_data["heat_echanger_percentage"])
   }
 
   function createHourlyTable(hourly) {
@@ -398,6 +400,38 @@
 
   }
 
+
+  function updateExchangerBadge(value) {
+    var badge = document.getElementById("exchangerbadge");
+    
+    if (value > 0) {
+      badge.classList.add('text-bg-success');
+      badge.classList.remove('text-bg-secondary');
+      badge.textContent= "Deluje: " + value + "%";
+    } else {
+      // Change class to "text-bg-secondary"
+      badge.classList.remove('text-bg-success');
+      badge.textContent= "Ne deluje";
+      badge.classList.add('text-bg-secondary');
+    }
+  }
+
+
+  function updateHeaterBadge(value) {
+    var badge = document.getElementById("heaterbadge");
+    
+    if (value > 0) {
+      badge.classList.add('text-bg-success');
+      badge.classList.remove('text-bg-secondary');
+      badge.textContent= "Deluje: " + value + "%";
+    } else {
+      // Change class to "text-bg-secondary"
+      badge.classList.remove('text-bg-success');
+      badge.textContent= "Ne deluje";
+      badge.classList.add('text-bg-secondary');
+    }
+  }
+
   function home_data(){
 
     $.get("{{ url_for('hvac_api.weather_home') }}", {}, function(data, textStatus, jqXHR) {
@@ -450,7 +484,7 @@
   window.onload = function() {
     update_data();
 
-    setInterval(hvac_data, 10000);
+    setInterval(hvac_data, 5000);
     setInterval(home_data, 300000);
   };
 </script>

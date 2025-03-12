@@ -6,7 +6,7 @@ trap "echo Error!" ERR
 
 # docker credentials
 USERNAME=charckle
-IMAGE=stribog_web_manager
+IMAGE=razorair
 
 echo "pulling latest image from git"
 git pull
