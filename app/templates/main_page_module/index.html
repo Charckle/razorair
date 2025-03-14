@@ -36,8 +36,9 @@
 
         <table class="table">
           <tbody>
+            
             <tr>
-              <th rowspan="2" class="text-center align-middle"><img id="home_icon" style="height: 80px;" src="/static/main_page_module/icons/weather/fill/not-available.svg" alt=""></th>
+              <th rowspan="2" class="text-center align-middle"><img id="home_icon" style="height: 80px;" src="{{ url_for('static', filename='main_page_module/icons/weather/fill/not-available.svg') }}" alt=""></th>
               <th scope="col"><i class="bi bi-house-fill"></i> Notranja temperatura</th>
               <th scope="col"><i class="bi bi-cloud"></i> Zunanja temperatura</th>
             </tr>
@@ -69,9 +70,9 @@
         <h5>Željena temperatura</h5>
 
         <div class="input-group">
-          <button class="btn btn-outline-primary  btn-lg" type="button" id="minusBtn"  style="flex-basis: 30%;"><img style="max-height: 50px;" src="http://127.0.0.1:5000/static/main_page_module/icons/weather/fill/thermometer-colder.svg" alt=""></button>
+          <button class="btn btn-outline-primary  btn-lg" type="button" id="minusBtn"  style="flex-basis: 30%;"><img style="max-height: 50px;" src="{{ url_for('static', filename='main_page_module/icons/weather/fill/thermometer-colder.svg') }}" alt=""></button>
           <input type="number" class="form-control text-center" id="req_t" value="22" min="12" max="30" readonly style="flex-basis: 40%;">
-          <button class="btn btn-outline-danger  btn-lg" type="button" id="plusBtn"  style="flex-basis: 30%;"><img style="max-height: 50px;" src="http://127.0.0.1:5000/static/main_page_module/icons/weather/fill/thermometer-warmer.svg" alt=""></button>
+          <button class="btn btn-outline-danger  btn-lg" type="button" id="plusBtn"  style="flex-basis: 30%;"><img style="max-height: 50px;" src="{{ url_for('static', filename='main_page_module/icons/weather/fill/thermometer-warmer.svg') }}" alt=""></button>
         </div>
         
 
@@ -104,13 +105,13 @@
 
         <div class="input-group">
           <button class="btn btn-outline-danger btn-lg" type="button" id="minusBtn_vnt" style="flex-basis: 30%;">
-              <img style="max-height: 50px;" src="http://127.0.0.1:5000/static/main_page_module/icons/weather/fill/wind-beaufort-1.svg" alt="">
+              <img style="max-height: 50px;" src="{{ url_for('static', filename='main_page_module/icons/weather/fill/wind-beaufort-1.svg') }}" alt="">
           </button>
           
           <input type="text" class="form-control text-center" id="speedInput" value="Stopped" readonly style="flex-basis: 40%;">
       
           <button class="btn btn-outline-success btn-lg" type="button" id="plusBtn_vnt" style="flex-basis: 30%;">
-              <img style="max-height: 50px;" src="http://127.0.0.1:5000/static/main_page_module/icons/weather/fill/wind-beaufort-12.svg" alt="">
+              <img style="max-height: 50px;" src="{{ url_for('static', filename='main_page_module/icons/weather/fill/wind-beaufort-12.svg') }}" alt="">
           </button>
       </div>
 
