@@ -46,6 +46,13 @@ def index():
     return render_template("main_page_module/index.html", Open_W_obj=Open_W_obj)
 
 
+@main_page_module.route('/hvac', methods=['GET'])
+@login_required
+def hvac():
+    
+    return render_template("main_page_module/hvac.html", Open_W_obj=Open_W_obj)
+
+
 @main_page_module.route('/radar', methods=['GET'])
 #@login_required
 def radar():
