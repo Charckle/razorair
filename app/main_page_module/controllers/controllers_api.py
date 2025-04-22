@@ -15,6 +15,7 @@ from app.main_page_module.other import Randoms
 from app.main_page_module.gears import Gears_obj
 from app.main_page_module.p_objects.open_meteo_o import Open_W_obj
 from app.main_page_module.p_objects.systemair_server_connect import Sasc
+from app.main_page_module.p_objects.thermostat import Thermo
 
 
 from app import app, targets_ram
@@ -69,6 +70,40 @@ def hvac_data_get():
     except Exception as e:
         app.logger.error(f"Error: {e}")      
         return "Error", 500
+
+
+@hvac_api.route('/thermostat_status_get', methods=['GET'])
+@login_required
+def thermostat_status_get():
+    data_ = {}
+    
+    try:
+        thermo_obj = Thermo(app.config['THERMOSTAT_SERVER'])
+        thermo_status = thermo_obj.get_status()
+                
+        return jsonify(thermo_status), 200
+    
+    except Exception as e:
+        app.logger.error(f"Error: {e}")      
+        return "Error", 500
+
+
+@hvac_api.route('/thermostat_startstop/<status>', methods=['GET'])
+@login_required
+def thermostat_startstop(status:str):
+    data_ = {}
+    
+    if status not in ["1","0"]:
+        status = "0"
+    try:
+        thermo_obj = Thermo(app.config['THERMOSTAT_SERVER'])
+        thermo_status = thermo_obj.set_on_off(status)
+        return jsonify(thermo_status), 200
+    
+    except Exception as e:
+        app.logger.error(f"Error: {e}")      
+        return "Error", 500    
+
     
 @hvac_api.route('/hvac_data_get', methods=['POST'])
 @login_required

@@ -21,6 +21,7 @@ class Config(object):
     
     APP_LOGGING = environ.get('RAIR_APP_LOGGING', "INFO")    
     SYSTEMAIR_SERVER = environ.get('SYSTEMAIR_SERVER', "127.0.0.1")    
+    THERMOSTAT_SERVER = environ.get('THERMOSTAT_SERVER', "127.0.0.1")    
     
     
     

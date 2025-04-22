@@ -1,0 +1,27 @@
+
+get /
+samo napiše "It works!" (it's a static message)
+
+get /api/status
+vrne vrednost v obliki: temp:prižgano
+temp je številka (tle in povsod kjer so temperature: za 21,5 stopinj bi bila 215)
+prižgano je 0 če je peč trenutno izklopljena in 1 če je vklopljena
+to ni tisto ki reguliraš s tipko. to je "ali trenutno kotel kuri" (ali je rele sklenjen)
+če je ta prižgan tudi gori ena ledica na termostatu
+
+get /api/desiredTemp
+vrne katera željena temperatura je nastavljena (samo vrednost kot string)
+
+post /api/desiredTemp
+nastavi željeno temperaturo
+v body daš temperaturo (no json or anything, just put the plain value as a string)
+
+get /api/on
+vrne 1 če je termostat vključen ali 0 če ni.
+je tudi ena ledica ki to kaže (ni ista kot prejšnja)
+
+post /api/on
+v body daš 0 ali 1 za nastavit to vrednost
+to isto lahko nastaviš tudi s tipko na termostatu.
+prižge ali ugasne termostat. 
+
