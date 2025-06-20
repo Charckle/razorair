@@ -15,7 +15,8 @@ class Config(object):
     ADMIN_USERNAME = environ.get('RAIR_ADMIN_USERNAME', "admin")
     # SHA512
     # banana
-    ADMIN_PASS_HASH = environ.get('RAIR_ADMIN_PASS_HASH', "$6$rounds=656000$fwae7LSkwByBpb.3$aHJHT/14VpH3lWIMK9TllW10WK3qi5D5fHvF9JzH6f588ly/GX/j9ojs7mDt/RHgLTAfmEZezob87x/SlKElT/")
+    #ADMIN_PASS_HASH = environ.get('RAIR_ADMIN_PASS_HASH', "$6$rounds=656000$fwae7LSkwByBpb.3$aHJHT/14VpH3lWIMK9TllW10WK3qi5D5fHvF9JzH6f588ly/GX/j9ojs7mDt/RHgLTAfmEZezob87x/SlKElT/")
+    ADMIN_PASS_HASH = environ.get('RAIR_ADMIN_PASS_HASH', "$6$rounds=656000$qVOc3MBGadAXOGky$D1ygzZeNsN3mu9Q.6hq1RdlAOsEctvLO5bdBBMncxdG9jlJX2kV2485sbol7E9uYmZKhPoI9bWwvM8bRQT2di.")
     
     SESSION_COOKIE_SECURE = True
     
