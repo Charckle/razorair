@@ -123,8 +123,8 @@
 
       <div class="d-grid gap-2">
         <div class="btn-group">
-          <button class="btn btn-outline-danger btn-lg" type="button" onclick="sendThermostatRequest(0)"><i class="bi bi-ban"></i> Off</button>
-          <button class="btn btn-success btn-lg" type="button" onclick="sendThermostatRequest(1)"><i class="bi bi-fire"></i> On</button>
+          <button id="kotel_off_btn" class="btn btn-outline-danger btn-lg" type="button" onclick="sendThermostatRequest(0)"><i class="bi bi-ban"></i> Off</button>
+          <button id="kotel_on_btn" class="btn btn-success btn-lg" type="button" onclick="sendThermostatRequest(1)"><i class="bi bi-fire"></i> On</button>
         </div>
       </div>
 
@@ -333,6 +333,26 @@
     var req_t = document.getElementById("req_t");
     if (thermo_data && thermo_data["set_temp"] !== null && thermo_data["set_temp"] !== undefined) {
       req_t.value = parseFloat(thermo_data["set_temp"]).toFixed(1);
+    }
+    
+    // Update Kotel button states based on enabled status
+    var kotel_off_btn = document.getElementById("kotel_off_btn");
+    var kotel_on_btn = document.getElementById("kotel_on_btn");
+    if (thermo_data && thermo_data["enabled"] !== null && thermo_data["enabled"] !== undefined) {
+      var is_enabled = thermo_data["enabled"];
+      if (is_enabled) {
+        // Thermostat is enabled - highlight On button
+        kotel_on_btn.classList.remove("btn-outline-success");
+        kotel_on_btn.classList.add("btn-success");
+        kotel_off_btn.classList.remove("btn-danger");
+        kotel_off_btn.classList.add("btn-outline-danger");
+      } else {
+        // Thermostat is disabled - highlight Off button
+        kotel_off_btn.classList.remove("btn-outline-danger");
+        kotel_off_btn.classList.add("btn-danger");
+        kotel_on_btn.classList.remove("btn-success");
+        kotel_on_btn.classList.add("btn-outline-success");
+      }
     }
   }
   
@@ -555,22 +575,28 @@
   }
 
   function sendThermostatRequest(state) {
-  const url = `/api/thermostat_startstop/${state}`;
-
-  fetch(url)
-    .then(response => {
-      if (!response.ok) throw new Error('Network response was not ok');
-      return response.text();
+    const enabled = state === 1;
+    const formData = new FormData();
+    formData.append('enabled', enabled.toString());
+    
+    fetch("{{ url_for('hvac_api.shelly_thermostat_enable') }}", {
+      method: 'POST',
+      body: formData
     })
-    .then(data => {
-      console.log('Response:', data);
-      alert(`Kotel ${state === 1 ? 'štartan' : 'ustavljen'}.\nResponse: ${data}`);
-    })
-    .catch(error => {
-      console.error('Fetch error:', error);
-      alert('Error: ' + error.message);
-    });
-}
+      .then(response => {
+        if (!response.ok) throw new Error('Network response was not ok');
+        return response.json();
+      })
+      .then(data => {
+        console.log('Response:', data);
+        // Refresh thermostat data after setting to confirm and update UI
+        shelly_thermostat_data();
+      })
+      .catch(error => {
+        console.error('Fetch error:', error);
+        alert('Error: ' + error.message);
+      });
+  }
 
   function home_data(){
 

@@ -51,11 +51,12 @@ class ShellyThermostat:
             return None
     
     def get_status(self):
-        """Get current temperature, set temperature, and humidity"""
+        """Get current temperature, set temperature, humidity, and enabled status"""
         resp_json = {
             "current_temp": None,
             "set_temp": None,
-            "current_humidity": None
+            "current_humidity": None,
+            "enabled": None
         }
         
         # Get current temperature from number component (id 201)
@@ -84,6 +85,15 @@ class ShellyThermostat:
                 resp_json["current_humidity"] = result_data.get("value", None)
             else:
                 resp_json["current_humidity"] = result_data
+        
+        # Get enabled status from boolean component (id 202)
+        boolean_status = self._make_rpc_request("boolean.getstatus", {"id": 202})
+        if boolean_status and "result" in boolean_status and "error" not in boolean_status:
+            result_data = boolean_status["result"]
+            if isinstance(result_data, dict):
+                resp_json["enabled"] = result_data.get("value", None)
+            else:
+                resp_json["enabled"] = bool(result_data)
         
         return resp_json
     
@@ -114,6 +124,27 @@ class ShellyThermostat:
         result = self._make_rpc_request("number.set", params)
         if not result:
             result = self._make_rpc_request("Number.Set", params)
+        
+        if result:
+            # Check if there's an error
+            if "error" in result:
+                return False
+            return True
+        return False
+    
+    def set_enabled(self, enabled):
+        """
+        Enable or disable the thermostat
+        enabled: bool, True to enable, False to disable
+        """
+        params = {
+            "value": bool(enabled),
+            "id": 202
+        }
+        
+        result = self._make_rpc_request("boolean.set", params)
+        if not result:
+            result = self._make_rpc_request("Boolean.Set", params)
         
         if result:
             # Check if there's an error

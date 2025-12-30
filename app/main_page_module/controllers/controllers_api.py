@@ -119,11 +119,11 @@ def shelly_thermostat_status():
         )
         status = shelly.get_status()
         if status is None:
-            status = {"current_temp": None, "set_temp": None, "current_humidity": None}
+            status = {"current_temp": None, "set_temp": None, "current_humidity": None, "enabled": None}
         return jsonify(status), 200
     except Exception as e:
         app.logger.error(f"Error getting Shelly thermostat status: {e}")
-        return jsonify({"current_temp": None, "set_temp": None, "current_humidity": None, "error": str(e)}), 200
+        return jsonify({"current_temp": None, "set_temp": None, "current_humidity": None, "enabled": None, "error": str(e)}), 200
 
 
 @hvac_api.route('/shelly_thermostat_set_temp', methods=['POST'])
@@ -141,6 +141,28 @@ def shelly_thermostat_set_temp():
         success = shelly.set_temperature(temperature)
         if success:
             return jsonify({"status": "success"}), 200
+        else:
+            return "Error", 500
+    except Exception as e:
+        app.logger.error(f"Error: {e}")
+        return "Error", 500
+
+
+@hvac_api.route('/shelly_thermostat_enable', methods=['POST'])
+@login_required
+def shelly_thermostat_enable():
+    try:
+        enabled = request.form.get("enabled", "false").lower() == "true"
+        app_config = Gears_obj.load_app_config()
+        shelly_src_id = app_config.get("shelly_src_id", "")
+        shelly_ip = app_config.get("shelly_thermostat_ip", app.config.get('SHELLY_THERMOSTAT_SERVER', '192.168.0.123'))
+        shelly = ShellyThermostat(
+            shelly_ip,
+            src_id=shelly_src_id
+        )
+        success = shelly.set_enabled(enabled)
+        if success:
+            return jsonify({"status": "success", "enabled": enabled}), 200
         else:
             return "Error", 500
     except Exception as e:
