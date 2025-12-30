@@ -1,0 +1,70 @@
+{% extends "main_page_module/base.html" %}
+
+{% block extraheader %}
+{% endblock extraheader  %}
+
+{% block nav_sett %}text-secondary{% endblock nav_sett %}
+
+{% block content%}
+
+{% macro render_field(field, placeholder=None) %}
+  <div class="mb-3">
+      {% set css_class = 'form-control ' + kwargs.pop('class', '') %}
+
+      {{ field.label }}
+
+      {% if field.errors %}
+          {% set css_class = css_class + ' is-invalid' %}
+
+          {% for error in field.errors %}
+              
+              <small id="{{ field.label.text }}" class="text-danger">
+                  {{ error }}
+            </small>
+
+          {% endfor %}
+          </ul>
+      {% endif %}
+
+      {{ field(class=css_class, autocomplete="off", placeholder=placeholder, **kwargs) }}
+  </div>
+{% endmacro %}
+
+  <div class="container-fluid">
+    <br>
+    <div class="row">
+      <div class="col-sm-1"></div>
+      <div class="col-sm-10">
+        
+        <h4>{% if city_index is defined %}Edit{% else %}Add{% endif %} City</h4>
+        <hr>
+        
+        <form method="POST" action="{% if city_index is defined %}{{ url_for('main_page_module.settings_city_edit', city_index=city_index) }}{% else %}{{ url_for('main_page_module.settings_city_new') }}{% endif %}" accept-charset="UTF-8" role="form">
+          {{ form.csrf_token }}
+          {{ form.city_index }}
+          
+          <div class="row">
+            <div class="col-md-4">
+              {{ render_field(form.city_name, placeholder="City Name") }}
+            </div>
+            <div class="col-md-4">
+              {{ render_field(form.city_latitude, placeholder="Latitude (e.g., 45.5334)") }}
+            </div>
+            <div class="col-md-4">
+              {{ render_field(form.city_longitude, placeholder="Longitude (e.g., 13.7278)") }}
+            </div>
+          </div>
+          
+          <div class="form-group">
+            {{ form.submit(class="btn btn-primary mb-2") }}
+            <a href="{{ url_for('main_page_module.settings_edit') }}" class="btn btn-secondary mb-2">Cancel</a>
+          </div>
+        </form>
+
+      </div>
+      <div class="col-sm-1"></div>
+    </div>
+  </div>
+
+{% endblock content %}
+

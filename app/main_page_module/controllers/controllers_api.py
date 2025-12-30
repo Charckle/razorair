@@ -143,25 +143,108 @@ def weather_home():
     data_ = {}
     
     try:
-        lat = 45.533421368837615
-        long = 13.727852449587754
-        weather_obj = Open_W_obj(lat, long, 2) 
+        cities = Gears_obj.load_cities()
+        app_config = Gears_obj.load_app_config()
+        current_lat = app_config.get("current_location_latitude")
+        current_long = app_config.get("current_location_longitude")
         
+        cities_data = []
+        local_weather = None
+        hourly_weather = {}
         
-        current = {}
-        current = weather_obj.current
+        # Get hourly weather and local weather from current location
+        warnings = []
+        if current_lat is not None and current_long is not None:
+            try:
+                weather_obj = Open_W_obj(float(current_lat), float(current_long), 12)
+                hourly_weather = weather_obj.hourly_object()
+                if weather_obj.current:
+                    current = weather_obj.current.copy()
+                    current["outside_t"] = current.get("temp", 0)
+                    current["inhouse_t"] = 24
+                    local_weather = current
+                
+                # Check for temperature warnings in next 24 hours
+                high_threshold = app_config.get("high_temp_threshold", 30.0)
+                low_threshold = app_config.get("low_temp_threshold", 0.0)
+                
+                # Get next 24 hours of hourly data
+                from datetime import datetime, timedelta
+                now = datetime.now()
+                next_24h = now + timedelta(hours=24)
+                
+                high_temp_found = False
+                low_temp_found = False
+                high_temp_value = None
+                low_temp_value = None
+                
+                # Check all hourly data (weather_obj.hourly contains all hours, not just 12)
+                for hour_str, hour_data in weather_obj.hourly.items():
+                    try:
+                        hour_time = datetime.strptime(hour_str, "%Y-%m-%dT%H:%M")
+                        if now < hour_time <= next_24h:
+                            temp = hour_data.get("temp", 0)
+                            if not high_temp_found and temp > high_threshold:
+                                high_temp_found = True
+                                high_temp_value = temp
+                            if not low_temp_found and temp < low_threshold:
+                                low_temp_found = True
+                                low_temp_value = temp
+                            
+                            # Track max/min for better warning messages
+                            if high_temp_found and temp > high_temp_value:
+                                high_temp_value = temp
+                            if low_temp_found and temp < low_temp_value:
+                                low_temp_value = temp
+                    except Exception:
+                        continue
+                
+                if high_temp_found:
+                    warnings.append({
+                        "type": "high",
+                        "message": f"V naslednjih 24 urah bo temperatura nad {high_threshold}°C (do {high_temp_value:.1f}°C)"
+                    })
+                
+                if low_temp_found:
+                    warnings.append({
+                        "type": "low",
+                        "message": f"V naslednjih 24 urah bo temperatura pod {low_threshold}°C (do {low_temp_value:.1f}°C)"
+                    })
+                    
+            except Exception as e:
+                app.logger.warning(f"Error getting current location weather: {e}")
         
-        current["outside_t"] = current["temp"]
-        current["inhouse_t"] = 24
-        current["icon"] = current["icon"]
+        # Get daily weather for all cities
+        for city in cities:
+            city_name = city.get("name", "Unknown")
+            lat = city.get("latitude")
+            long = city.get("longitude")
+            
+            if lat is None or long is None:
+                app.logger.warning(f"City {city_name} missing latitude or longitude")
+                continue
+                
+            weather_obj = Open_W_obj(lat, long, 12)
+            
+            city_weather = {
+                "name": city_name,
+                "current": {},
+                "daily": {}
+            }
+            
+            if weather_obj.current:
+                current = weather_obj.current.copy()
+                current["outside_t"] = current.get("temp", 0)
+                current["inhouse_t"] = 24
+                city_weather["current"] = current
+            
+            city_weather["daily"] = weather_obj.daily_object()
+            cities_data.append(city_weather)
         
-        
-        hourly = weather_obj.hourly
-        
-        
-        data_["current"] = current
-        data_["hourly"] = weather_obj.hourly_object()
-        data_["daily"] = weather_obj.daily_object()
+        data_["cities"] = cities_data
+        data_["local"] = local_weather
+        data_["hourly"] = hourly_weather
+        data_["warnings"] = warnings
         
         return jsonify(data_), 200
     except Exception as e:

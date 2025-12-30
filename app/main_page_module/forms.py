@@ -108,12 +108,30 @@ class UserProfileF(FlaskForm):
         
         else:  
             raise ValidationError('Please use a valid email address.')            
-    
 
+
+class Configuration(FlaskForm):
+    current_location_latitude = StringField('Current Location Latitude', [validators.InputRequired()])
+    current_location_longitude = StringField('Current Location Longitude', [validators.InputRequired()])
+    high_temp_threshold = StringField('High Temperature Threshold (°C)', [validators.InputRequired()])
+    low_temp_threshold = StringField('Low Temperature Threshold (°C)', [validators.InputRequired()])
+    
+    submit = SubmitField('Save Changes')
+
+
+class CityForm(FlaskForm):
+    city_index = HiddenField('city_index')
+    city_name = StringField('City Name', [validators.InputRequired(), validators.Length(max=128)])
+    city_latitude = StringField('Latitude', [validators.InputRequired()])
+    city_longitude = StringField('Longitude', [validators.InputRequired()])
+    
+    submit = SubmitField('Save City')
 
  
 form_dicts = {"Weather": Weather,
               "HVACProgram": HVACProgram,
               "User": UserF,
-              "Login": Login
+              "Login": Login,
+              "Configuration": Configuration,
+              "City": CityForm
               } 

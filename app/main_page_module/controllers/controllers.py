@@ -180,59 +180,141 @@ def settings_edit():
     form = form_dicts["Configuration"]()
     
     try:
-        settings = Gears_obj.load_settings()
+        cities = Gears_obj.load_cities()
+        app_config = Gears_obj.load_app_config()
+        current_lat = app_config.get("current_location_latitude", "")
+        current_long = app_config.get("current_location_longitude", "")
+        high_temp = app_config.get("high_temp_threshold", 30.0)
+        low_temp = app_config.get("low_temp_threshold", 0.0)
     except Exception as e:
         app.logger.warn(f"{e}")
-        error_msg = "Napaka pri nalaganju nastavitev iz datoteke."
+        error_msg = "Napaka pri nalaganju nastavitev."
         flash(error_msg, 'error')
-        
-        return redirect(url_for("main_page_module.base_"))        
-
-    # GET
-    if request.method == 'GET':
-        form.process(instance_name = settings["instance_name"],
-                     admin_email = settings["admin_email"],
-                     emails = int(settings["emails"]),
-                     send_analitycs_to_admin = int(settings["send_analitycs_to_admin"]),
-                     source_check_interval = settings["source_check_interval"],
-                     smtp_server = settings["smtp_server"],
-                     smtp_port = settings["smtp_port"],
-                     smtp_sender_email = settings["smtp_sender_email"],
-                     smtp_password = settings["smtp_password"],
-                     topic = settings["topic"],
-                     message = settings["message"],
-                     on_no_memory_send_one = int(settings["on_no_memory_send_one"]),
-                     logging_level = settings["logging_level"])
+        return redirect(url_for("main_page_module.index"))
     
-    # POST
+    # GET - populate form
+    if request.method == 'GET':
+        form.process(current_location_latitude=str(current_lat),
+                    current_location_longitude=str(current_long),
+                    high_temp_threshold=str(high_temp),
+                    low_temp_threshold=str(low_temp))
+    
+    # POST - save changes
     if form.validate_on_submit():
-        settings_ = {"instance_name": form.instance_name.data,
-                      "admin_email": form.admin_email.data,
-                      "emails": bool(int(form.emails.data)),
-                      "send_analitycs_to_admin": bool(int(form.send_analitycs_to_admin.data)),
-                      "source_check_interval": form.source_check_interval.data,
-                      "smtp_server": form.smtp_server.data,
-                      "smtp_port": form.smtp_port.data,
-                      "smtp_sender_email": form.smtp_sender_email.data,
-                      "smtp_password": form.smtp_password.data,
-                      "topic": form.topic.data,
-                      "message": form.message.data,
-                      "on_no_memory_send_one": bool(int(form.on_no_memory_send_one.data)),
-                      "logging_level": form.logging_level.data}
-                
-        Gears_obj.save_settings(settings_)
+        try:
+            app_config["current_location_latitude"] = float(form.current_location_latitude.data)
+            app_config["current_location_longitude"] = float(form.current_location_longitude.data)
+            app_config["high_temp_threshold"] = float(form.high_temp_threshold.data)
+            app_config["low_temp_threshold"] = float(form.low_temp_threshold.data)
+        except ValueError:
+            flash('Invalid numeric values.', 'error')
+            return redirect(url_for("main_page_module.settings_edit"))
+        
+        Gears_obj.save_app_config(app_config)
         
         msg_ = "Nastavitve posodobljene."
         flash(msg_, 'success')
-        
         return redirect(url_for("main_page_module.settings_edit"))
     
     for field, errors in form.errors.items():
         app.logger.warn(f"Field: {field}")
         for error in errors:
-            flash(f'Invalid Data for {field}: {error}', 'error')    
+            flash(f'Invalid Data for {field}: {error}', 'error')
+    
+    return render_template("main_page_module/admin/settings_edit.html", 
+                         form=form, 
+                         cities=cities)
+
+
+@main_page_module.route('/settings_city_new', methods=['GET', 'POST'])
+@login_required
+def settings_city_new():
+    form = form_dicts["City"]()
+    
+    if form.validate_on_submit():
+        try:
+            new_city = {
+                "name": form.city_name.data,
+                "latitude": float(form.city_latitude.data),
+                "longitude": float(form.city_longitude.data)
+            }
             
-    return render_template("main_page_module/admin/settings_edit.html", form=form)
+            cities = Gears_obj.load_cities()
+            cities.append(new_city)
+            Gears_obj.save_cities(cities)
+            
+            flash("City added successfully.", 'success')
+            return redirect(url_for("main_page_module.settings_edit"))
+        except ValueError:
+            flash('Invalid latitude or longitude values.', 'error')
+        except Exception as e:
+            app.logger.error(f"Error adding city: {e}")
+            flash('Error adding city.', 'error')
+    
+    return render_template("main_page_module/admin/settings_city_edit.html", form=form)
+
+
+@main_page_module.route('/settings_city_edit/<int:city_index>', methods=['GET', 'POST'])
+@login_required
+def settings_city_edit(city_index):
+    form = form_dicts["City"]()
+    
+    try:
+        cities = Gears_obj.load_cities()
+        
+        if city_index >= len(cities):
+            flash("City not found.", 'error')
+            return redirect(url_for("main_page_module.settings_edit"))
+        
+        city = cities[city_index]
+        
+        if request.method == 'GET':
+            form.process(city_index=city_index,
+                         city_name=city["name"],
+                         city_latitude=str(city["latitude"]),
+                         city_longitude=str(city["longitude"]))
+        
+        if form.validate_on_submit():
+            try:
+                cities[city_index] = {
+                    "name": form.city_name.data,
+                    "latitude": float(form.city_latitude.data),
+                    "longitude": float(form.city_longitude.data)
+                }
+                Gears_obj.save_cities(cities)
+                
+                flash("City updated successfully.", 'success')
+                return redirect(url_for("main_page_module.settings_edit"))
+            except ValueError:
+                flash('Invalid latitude or longitude values.', 'error')
+            except Exception as e:
+                app.logger.error(f"Error updating city: {e}")
+                flash('Error updating city.', 'error')
+    except Exception as e:
+        app.logger.error(f"Error: {e}")
+        flash('Error loading city.', 'error')
+        return redirect(url_for("main_page_module.settings_edit"))
+    
+    return render_template("main_page_module/admin/settings_city_edit.html", form=form, city_index=city_index)
+
+
+@main_page_module.route('/settings_city_delete/<int:city_index>', methods=['GET'])
+@login_required
+def settings_city_delete(city_index):
+    try:
+        cities = Gears_obj.load_cities()
+        
+        if city_index >= len(cities):
+            flash("City not found.", 'error')
+        else:
+            cities.pop(city_index)
+            Gears_obj.save_cities(cities)
+            flash("City deleted successfully.", 'success')
+    except Exception as e:
+        app.logger.error(f"Error deleting city: {e}")
+        flash('Error deleting city.', 'error')
+    
+    return redirect(url_for("main_page_module.settings_edit"))
 
 
 

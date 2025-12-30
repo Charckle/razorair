@@ -58,8 +58,8 @@
         <legend>Opozorila</legend>
         <hr>
 
-        <div class="list-group">
-          <a href="#" class="list-group-item list-group-item-action list-group-item-warning"><i class="bi bi-exclamation-triangle-fill"></i> <i class="bi bi-snow2"></i> - V naslednjih 24 urah bo temperatura pod 0°</a>
+        <div id="warnings_container" class="list-group">
+          <!-- Warnings will be dynamically inserted here -->
         </div>
         
       </div>
@@ -173,63 +173,17 @@
       </div>
     </div>
 
-    <div class="row">
-      {% set weather_obj = Open_W_obj(45.533421368837615, 13.727852449587754) %}
-
+    <div id="hourly_weather_container" class="mb-4">
       <div class="card">
-        <div id="hourly_table_div" class="card-body">
-          <div class="table-responsive">
-            <table class="table table-borderless">
-              {% set weadays = weather_obj.hourly_object() %}
-              <tbody class="text-center">
-
-                <tr>
-                  {% for date_, wd in weadays.items() %}
-                  <td style="background-color:rgb(139, 201, 240)"><img style="max-height: 50px;" src="{{ wd['icon'] }}" alt=""></td>
-                  {% endfor %}
-                </tr>
-                <tr>
-                  {% for date_, wd in weadays.items() %}
-                  <td style="background-color:rgb(125, 177, 207)">{{ wd['temp'] }}°</td>
-                  {% endfor %}
-                </tr>
-                <tr>
-                  {% for date_, wd in weadays.items() %}
-                  <td style="background-color:rgb(47, 131, 180); color:beige">{{ Pylavor.datetime_to_string_time(date_, date_=False,seconds=False) }}</td>
-                  {% endfor %}
-                </tr>
-              </tbody>
-            </table>
-          </div>
+        <div class="card-body">
+          <h5>Hourly Weather (Current Location)</h5>
+          <div id="hourly_weather_div"></div>
         </div>
       </div>
-
     </div>
 
-    <div class="row">
-      <div class="col-sm-12">
-
-          <h5>Koper</h5>
-
-              {% set weadays = weather_obj.daily_object(max_hits=12) %}
-
-              <div id="home_weather" class="row">
-              {% for date_, wd in weadays.items() %}
-                <div class="col-sm-1">
-                  <div class="card">
-                    <div class="card-body text-center">
-                      <p class="card-text">{{ wd['day_name'] }}</p>
-                      <img style="max-height: 80px;" src="{{ wd['icon'] }}" alt="">
-                      <p class="card-text"><span style="color:rgb(113, 161, 201)">{{ wd['temp_min'] }}°</span> - <span style="color:rgb(226, 96, 96)">{{ wd['temp_max'] }}°</span</p>
-                    </div>
-                  </div>
-                </div>
-              {% endfor %}
-             </div>
-
-
-
-      </div>
+    <div id="cities_weather_container">
+      <!-- Cities weather will be dynamically inserted here -->
     </div>
 
   </div>
@@ -243,25 +197,89 @@
   }
 
   function set_home_data(home_data) {
-    var current = home_data["current"];
-    var hourly = home_data["hourly"];
-    var daily = home_data["daily"];
+    var cities = home_data["cities"] || [];
+    var local = home_data["local"] || {};
+    var hourly = home_data["hourly"] || {};
+    var warnings = home_data["warnings"] || [];
 
+    // Use local city's current weather for the home icon
+    if (local["icon"]) {
+      var home_icon = document.getElementById("home_icon");
+      home_icon.src = local["icon"];
+    }
 
-    // set tempetrature
-    //var inhouse_t = document.getElementById("inhouse_t");
-    //var outside_t = document.getElementById("outside_t");
-    //inhouse_t.innerHTML = current["inhouse_t"];
-    //outside_t.innerHTML = current["outside_t"];
+    // Render hourly weather from current location (shown once at top)
+    if (Object.keys(hourly).length > 0) {
+      var hourlyContainer = document.getElementById("hourly_weather_container");
+      if (hourlyContainer) {
+        createHourlyTable(hourly, "hourly_weather_div");
+      }
+    }
 
-    // icon
-    var home_icon = document.getElementById("home_icon");
-    home_icon.src = current["icon"];
+    // Render warnings
+    renderWarnings(warnings);
 
-    createHourlyTable(hourly);
-    createDailycards(daily);
-
-
+    // Render all cities (daily weather only)
+    renderCitiesWeather(cities);
+  }
+  
+  function renderWarnings(warnings) {
+    var container = document.getElementById("warnings_container");
+    container.innerHTML = "";
+    
+    if (warnings.length === 0) {
+      return;
+    }
+    
+    warnings.forEach(function(warning) {
+      var warningItem = document.createElement("a");
+      warningItem.href = "#";
+      warningItem.className = "list-group-item list-group-item-action list-group-item-warning";
+      
+      var icon = document.createElement("i");
+      if (warning.type === "high") {
+        icon.className = "bi bi-thermometer-high";
+      } else {
+        icon.className = "bi bi-thermometer-low";
+      }
+      warningItem.appendChild(icon);
+      
+      warningItem.appendChild(document.createTextNode(" " + warning.message));
+      
+      container.appendChild(warningItem);
+    });
+  }
+  
+  function renderCitiesWeather(cities) {
+    var container = document.getElementById("cities_weather_container");
+    container.innerHTML = "";
+    
+    cities.forEach(function(city) {
+      var cityName = city["name"] || "Unknown";
+      var daily = city["daily"] || {};
+      var cityId = cityName.replace(/\s+/g, "_");
+      
+      // Daily forecast row
+      var dailyRow = document.createElement("div");
+      dailyRow.className = "row mb-4";
+      var dailyCol = document.createElement("div");
+      dailyCol.className = "col-sm-12";
+      
+      var cityTitle = document.createElement("h5");
+      cityTitle.textContent = cityName;
+      dailyCol.appendChild(cityTitle);
+      
+      var dailyContainer = document.createElement("div");
+      dailyContainer.className = "row";
+      dailyContainer.id = "home_weather_" + cityId;
+      dailyCol.appendChild(dailyContainer);
+      
+      dailyRow.appendChild(dailyCol);
+      container.appendChild(dailyRow);
+      
+      // Render daily for this city
+      createDailycards(daily, "home_weather_" + cityId);
+    });
   }
 
   function convertTemperatures(rawTemp) {
@@ -300,89 +318,107 @@
     updateExchangerBadge(hvac_data["heat_echanger_percentage"])
   }
 
-  function createHourlyTable(hourly) {
+  function createHourlyTable(hourly, containerId) {
+    // Use provided container ID or default
+    containerId = containerId || "hourly_table_div";
+    var hourly_table_div = document.getElementById(containerId);
+    
+    if (!hourly_table_div) {
+      console.error("Container not found: " + containerId);
+      return;
+    }
+    
     // empty the div
-    var hourly_table_div = document.getElementById("hourly_table_div");
     hourly_table_div.innerHTML = "";
 
-    // table div
-    var table_div = document.createElement('div');
-    table_div.className = "table-responsive";
-    hourly_table_div.appendChild(table_div);
+    // Create scrollable container
+    var scrollContainer = document.createElement('div');
+    scrollContainer.className = "d-flex flex-nowrap overflow-auto pb-2";
+    scrollContainer.style.cssText = "scrollbar-width: thin; -webkit-overflow-scrolling: touch;";
+    hourly_table_div.appendChild(scrollContainer);
 
+    // Create row for hourly items
+    var hourlyRow = document.createElement('div');
+    hourlyRow.className = "d-flex flex-nowrap gap-2";
+    scrollContainer.appendChild(hourlyRow);
 
-    // table element
-    var table = document.createElement('table');
-    table.className = "table table-borderless";
-    table_div.appendChild(table);
+    // Helper function to format time
+    function formatTime(dateStr) {
+      var timePart = dateStr.split('T')[1];
+      var [hours, minutes] = timePart.split(':');
+      return hours + ':' + minutes;
+    }
 
-    // body
-    var tbody = document.createElement('tbody');
-    tbody.className = "text-center";
-    table.appendChild(tbody);
-
-    
-
-
-
-    var icon_row = document.createElement('tr');
-    tbody.appendChild(icon_row);
-
-
-    // fill icons
-    //console.log(hourly);
-
+    // Create hourly cards
     for (let [date_, wd] of Object.entries(hourly)){
-        var header1 = document.createElement('th');
+        var hourCard = document.createElement('div');
+        hourCard.className = "text-center";
+        hourCard.style.cssText = "min-width: 80px; flex-shrink: 0;";
+        
+        // Card container
+        var card = document.createElement('div');
+        card.className = "card h-100";
         if (wd["day"] == true) {
-          var style = "background-color:rgb(139, 201, 240); color:beige";
+          card.style.cssText = "background: linear-gradient(135deg, #8BC8F0 0%, #5BA3D6 100%); border: none; box-shadow: 0 2px 8px rgba(0,0,0,0.1);";
         } else {
-          var style = "background-color:rgb(76, 135, 172); color:beige";
+          card.style.cssText = "background: linear-gradient(135deg, #4C87AC 0%, #2E5A7E 100%); border: none; box-shadow: 0 2px 8px rgba(0,0,0,0.15);";
         }
-        header1.style = style;
-        icon_row.appendChild(header1);
+        hourCard.appendChild(card);
+
+        var cardBody = document.createElement('div');
+        cardBody.className = "card-body p-2 d-flex flex-column justify-content-center";
+        card.appendChild(cardBody);
+
+        // Time
+        var timeEl = document.createElement('div');
+        timeEl.className = "small mb-2 fw-bold";
+        timeEl.style.cssText = "color: rgba(255,255,255,0.95); font-size: 0.75rem;";
+        timeEl.textContent = formatTime(date_);
+        cardBody.appendChild(timeEl);
+
+        // Icon
+        var iconContainer = document.createElement('div');
+        iconContainer.className = "mb-2";
+        cardBody.appendChild(iconContainer);
 
         var icon = document.createElement('img');
-        icon.style = "max-height: 50px;";
+        icon.style.cssText = "max-height: 45px; width: auto; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));";
         icon.src = wd['icon'];
+        icon.alt = "Weather icon";
+        iconContainer.appendChild(icon);
 
-        header1.appendChild(icon);
+        // Temperature
+        var tempEl = document.createElement('div');
+        tempEl.className = "fw-bold";
+        tempEl.style.cssText = "color: white; font-size: 1.1rem; text-shadow: 0 1px 3px rgba(0,0,0,0.3);";
+        tempEl.textContent = wd['temp'] + "°";
+        cardBody.appendChild(tempEl);
 
+        // Add hover effect
+        hourCard.addEventListener('mouseenter', function() {
+          card.style.transform = 'translateY(-4px)';
+          card.style.transition = 'transform 0.2s ease, box-shadow 0.2s ease';
+          card.style.boxShadow = '0 4px 12px rgba(0,0,0,0.2)';
+        });
+        hourCard.addEventListener('mouseleave', function() {
+          card.style.transform = 'translateY(0)';
+          card.style.boxShadow = wd["day"] ? '0 2px 8px rgba(0,0,0,0.1)' : '0 2px 8px rgba(0,0,0,0.15)';
+        });
 
-    }
-
-    var temp_row = document.createElement('tr');
-    tbody.appendChild(temp_row);
-
-    for (let [date_, wd] of Object.entries(hourly)){
-        var header1 = document.createElement('td');
-        header1.style = "background-color:rgb(125, 177, 207)";
-        header1.innerHTML = wd['temp'] + "°";
-
-        temp_row.appendChild(header1);
-    }
-
-    var date_row = document.createElement('tr');
-    tbody.appendChild(date_row);
-
-    for (let [date_, wd] of Object.entries(hourly)){
-        var header1 = document.createElement('td');
-
-        if (wd["day"] == true) {
-          var style = "background-color:rgb(47, 131, 180); color:beige";
-        } else {
-          var style = "background-color:rgb(56, 99, 126); color:beige";
-        }
-        header1.style = style;
-        header1.innerHTML = date_.split('T')[1];
-
-        date_row.appendChild(header1);
+        hourlyRow.appendChild(hourCard);
     }
 
   }
 
-  function createDailycards(daily) {
-    var home_weather_div = document.getElementById("home_weather");
+  function createDailycards(daily, containerId) {
+    containerId = containerId || "home_weather";
+    var home_weather_div = document.getElementById(containerId);
+    
+    if (!home_weather_div) {
+      console.error("Container not found: " + containerId);
+      return;
+    }
+    
     home_weather_div.innerHTML = "";
 
     for (let [date_, wd] of Object.entries(daily)){
