@@ -16,6 +16,7 @@ from app.main_page_module.gears import Gears_obj
 from app.main_page_module.p_objects.open_meteo_o import Open_W_obj
 from app.main_page_module.p_objects.systemair_server_connect import Sasc
 from app.main_page_module.p_objects.thermostat import Thermo
+from app.main_page_module.p_objects.shelly_thermostat import ShellyThermostat
 
 
 from app import app, targets_ram
@@ -102,7 +103,49 @@ def thermostat_startstop(status:str):
     
     except Exception as e:
         app.logger.error(f"Error: {e}")      
-        return "Error", 500    
+        return "Error", 500
+
+
+@hvac_api.route('/shelly_thermostat_status', methods=['GET'])
+@login_required
+def shelly_thermostat_status():
+    try:
+        app_config = Gears_obj.load_app_config()
+        shelly_src_id = app_config.get("shelly_src_id", "")
+        shelly_ip = app_config.get("shelly_thermostat_ip", app.config.get('SHELLY_THERMOSTAT_SERVER', '192.168.0.123'))
+        shelly = ShellyThermostat(
+            shelly_ip,
+            src_id=shelly_src_id
+        )
+        status = shelly.get_status()
+        if status is None:
+            status = {"current_temp": None, "set_temp": None, "current_humidity": None}
+        return jsonify(status), 200
+    except Exception as e:
+        app.logger.error(f"Error getting Shelly thermostat status: {e}")
+        return jsonify({"current_temp": None, "set_temp": None, "current_humidity": None, "error": str(e)}), 200
+
+
+@hvac_api.route('/shelly_thermostat_set_temp', methods=['POST'])
+@login_required
+def shelly_thermostat_set_temp():
+    try:
+        temperature = float(request.form.get("temperature"))
+        app_config = Gears_obj.load_app_config()
+        shelly_src_id = app_config.get("shelly_src_id", "")
+        shelly_ip = app_config.get("shelly_thermostat_ip", app.config.get('SHELLY_THERMOSTAT_SERVER', '192.168.0.123'))
+        shelly = ShellyThermostat(
+            shelly_ip,
+            src_id=shelly_src_id
+        )
+        success = shelly.set_temperature(temperature)
+        if success:
+            return jsonify({"status": "success"}), 200
+        else:
+            return "Error", 500
+    except Exception as e:
+        app.logger.error(f"Error: {e}")
+        return "Error", 500
 
     
 @hvac_api.route('/hvac_data_get', methods=['POST'])

@@ -22,6 +22,7 @@ from app import app, targets_ram
 #import os
 import re
 import os
+import uuid
 import zipfile
 import io
 import pathlib
@@ -186,6 +187,8 @@ def settings_edit():
         current_long = app_config.get("current_location_longitude", "")
         high_temp = app_config.get("high_temp_threshold", 30.0)
         low_temp = app_config.get("low_temp_threshold", 0.0)
+        shelly_src_id = app_config.get("shelly_src_id", str(uuid.uuid4()))
+        shelly_thermostat_ip = app_config.get("shelly_thermostat_ip", "192.168.0.123")
     except Exception as e:
         app.logger.warn(f"{e}")
         error_msg = "Napaka pri nalaganju nastavitev."
@@ -197,7 +200,9 @@ def settings_edit():
         form.process(current_location_latitude=str(current_lat),
                     current_location_longitude=str(current_long),
                     high_temp_threshold=str(high_temp),
-                    low_temp_threshold=str(low_temp))
+                    low_temp_threshold=str(low_temp),
+                    shelly_src_id=shelly_src_id,
+                    shelly_thermostat_ip=shelly_thermostat_ip)
     
     # POST - save changes
     if form.validate_on_submit():
@@ -206,6 +211,8 @@ def settings_edit():
             app_config["current_location_longitude"] = float(form.current_location_longitude.data)
             app_config["high_temp_threshold"] = float(form.high_temp_threshold.data)
             app_config["low_temp_threshold"] = float(form.low_temp_threshold.data)
+            app_config["shelly_src_id"] = form.shelly_src_id.data
+            app_config["shelly_thermostat_ip"] = form.shelly_thermostat_ip.data.strip()
         except ValueError:
             flash('Invalid numeric values.', 'error')
             return redirect(url_for("main_page_module.settings_edit"))

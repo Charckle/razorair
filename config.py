@@ -22,7 +22,8 @@ class Config(object):
     
     APP_LOGGING = environ.get('RAIR_APP_LOGGING', "INFO")    
     SYSTEMAIR_SERVER = environ.get('SYSTEMAIR_SERVER', "127.0.0.1")    
-    THERMOSTAT_SERVER = environ.get('THERMOSTAT_SERVER', "127.0.0.1")    
+    THERMOSTAT_SERVER = environ.get('THERMOSTAT_SERVER', "127.0.0.1")
+    SHELLY_THERMOSTAT_SERVER = environ.get('SHELLY_THERMOSTAT_SERVER', "192.168.0.123")    
     
     
     

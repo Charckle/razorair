@@ -1,4 +1,5 @@
 import os
+import uuid
 from datetime import datetime, timedelta
 from app.pylavor import Pylavor
 
@@ -112,7 +113,9 @@ class Gears_obj:
                 "current_location_latitude": 45.533421368837615,
                 "current_location_longitude": 13.727852449587754,
                 "high_temp_threshold": 30.0,
-                "low_temp_threshold": 0.0
+                "low_temp_threshold": 0.0,
+                "shelly_src_id": str(uuid.uuid4()),
+                "shelly_thermostat_ip": "192.168.0.123"
             }
             Gears_obj.save_app_config(default_config)
             return default_config    

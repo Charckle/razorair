@@ -115,6 +115,8 @@ class Configuration(FlaskForm):
     current_location_longitude = StringField('Current Location Longitude', [validators.InputRequired()])
     high_temp_threshold = StringField('High Temperature Threshold (°C)', [validators.InputRequired()])
     low_temp_threshold = StringField('Low Temperature Threshold (°C)', [validators.InputRequired()])
+    shelly_src_id = StringField('Shelly Source ID', [validators.InputRequired()])
+    shelly_thermostat_ip = StringField('Shelly Thermostat IP', [validators.InputRequired()])
     
     submit = SubmitField('Save Changes')
 

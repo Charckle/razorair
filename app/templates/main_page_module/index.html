@@ -40,10 +40,12 @@
             <tr>
               <th rowspan="2" class="text-center align-middle"><img id="home_icon" style="height: 80px;" src="{{ url_for('static', filename='main_page_module/icons/weather/fill/not-available.svg') }}" alt=""></th>
               <th scope="col"><i class="bi bi-house-fill"></i> Notranja temperatura</th>
+              <th scope="col"><i class="bi bi-house-fill"></i> <i class="bi bi-droplet"></i> Vlažnost</th>
               <th scope="col"><i class="bi bi-cloud"></i> Zunanja temperatura</th>
             </tr>
             <tr>
               <td><span id="inhouse_t"></span>°C</td>
+              <td><span id="inhouse_humidity"></span>%</td>
               <td><span id="outside_t"></span>°C</td>
             </tr>
 
@@ -71,7 +73,7 @@
 
         <div class="input-group">
           <button class="btn btn-outline-primary  btn-lg" type="button" id="minusBtn"  style="flex-basis: 30%;"><img style="max-height: 50px;" src="{{ url_for('static', filename='main_page_module/icons/weather/fill/thermometer-colder.svg') }}" alt=""></button>
-          <input type="number" class="form-control text-center" id="req_t" value="22" min="12" max="30" readonly style="flex-basis: 40%;">
+          <input type="number" class="form-control text-center" id="req_t" value="22" min="12" max="30" step="0.5" readonly style="flex-basis: 40%;">
           <button class="btn btn-outline-danger  btn-lg" type="button" id="plusBtn"  style="flex-basis: 30%;"><img style="max-height: 50px;" src="{{ url_for('static', filename='main_page_module/icons/weather/fill/thermometer-warmer.svg') }}" alt=""></button>
         </div>
         
@@ -82,21 +84,21 @@
           const plusBtn = document.getElementById('plusBtn');
           const temperatureInput = document.getElementById('req_t');
         
-          // Set increment and decrement functions
+          // Set increment and decrement functions with 0.5 degree precision
           minusBtn.addEventListener('click', () => {
-            const currentTemp = parseInt(temperatureInput.value);
-            if (currentTemp > temperatureInput.min) {
-              temperatureInput.value = currentTemp - 1;
+            const currentTemp = parseFloat(temperatureInput.value);
+            if (currentTemp > parseFloat(temperatureInput.min)) {
+              temperatureInput.value = (currentTemp - 0.5).toFixed(1);
             }
-            set_hvac_vent_temp();
+            set_shelly_thermostat_temp();
           });
         
           plusBtn.addEventListener('click', () => {
-            const currentTemp = parseInt(temperatureInput.value);
-            if (currentTemp < temperatureInput.max) {
-              temperatureInput.value = currentTemp + 1;
+            const currentTemp = parseFloat(temperatureInput.value);
+            if (currentTemp < parseFloat(temperatureInput.max)) {
+              temperatureInput.value = (currentTemp + 0.5).toFixed(1);
             }
-            set_hvac_vent_temp();
+            set_shelly_thermostat_temp();
           });
         </script>
 
@@ -194,6 +196,7 @@
     home_data();
     hvac_data();
     thermostat_data();
+    shelly_thermostat_data();
   }
 
   function set_home_data(home_data) {
@@ -298,16 +301,9 @@
   function set_hvac_data(hvac_data) {
     var daily = hvac_data["daily"];
 
-
-    // set tempetrature
-    var inhouse_t = document.getElementById("inhouse_t");
+    // set outside temperature (internal temp now comes from Shelly thermostat)
     var outside_t = document.getElementById("outside_t");
-    inhouse_t.innerHTML = hvac_data["outtake_temp"];
     outside_t.innerHTML = hvac_data["outside_temp"];
-
-    // set user set temperature
-    var req_t = document.getElementById("req_t");
-    req_t.value = hvac_data["user_set_temp"];
 
     // set ventilation speed
     user_set_ventilation = hvac_data["user_set_ventilation"];
@@ -316,6 +312,53 @@
     updateVentSpeedDisplay();
     updateHeaterBadge(hvac_data["heater_percentage"])
     updateExchangerBadge(hvac_data["heat_echanger_percentage"])
+  }
+  
+  function set_shelly_thermostat_data(thermo_data) {
+    // Update internal temperature from Shelly thermostat
+    var inhouse_t = document.getElementById("inhouse_t");
+    if (thermo_data && thermo_data["current_temp"] !== null && thermo_data["current_temp"] !== undefined) {
+      inhouse_t.innerHTML = parseFloat(thermo_data["current_temp"]).toFixed(1);
+    } else {
+      console.log("Shelly thermostat: current_temp not available", thermo_data);
+    }
+    
+    // Update humidity from Shelly thermostat
+    var inhouse_humidity = document.getElementById("inhouse_humidity");
+    if (thermo_data && thermo_data["current_humidity"] !== null && thermo_data["current_humidity"] !== undefined) {
+      inhouse_humidity.innerHTML = parseFloat(thermo_data["current_humidity"]).toFixed(0);
+    }
+    
+    // Update set temperature (refresh from device to show manual changes)
+    var req_t = document.getElementById("req_t");
+    if (thermo_data && thermo_data["set_temp"] !== null && thermo_data["set_temp"] !== undefined) {
+      req_t.value = parseFloat(thermo_data["set_temp"]).toFixed(1);
+    }
+  }
+  
+  function set_shelly_thermostat_temp() {
+    var r_temp = document.getElementById("req_t").value;
+    $.post("{{ url_for('hvac_api.shelly_thermostat_set_temp') }}", 
+      {"temperature": r_temp}, 
+      function(data, textStatus) {
+        // Refresh thermostat data after setting to confirm
+        shelly_thermostat_data();
+      }, "json").fail(function(jqXHR, textStatus, errorThrown) {
+        console.error("Error setting Shelly thermostat temperature:", errorThrown);
+      });
+  }
+  
+  function shelly_thermostat_data() {
+    $.get("{{ url_for('hvac_api.shelly_thermostat_status') }}", {}, 
+      function(data, textStatus, jqXHR) {
+        if (jqXHR.status == 200) {
+          set_shelly_thermostat_data(data);
+        } else {
+          console.log("Error getting Shelly thermostat data. Status:", jqXHR.status);
+        }
+      }, "json").fail(function(jqXHR, textStatus, errorThrown) {
+        console.error("Error getting Shelly thermostat data:", errorThrown, "Status:", jqXHR.status);
+      });
   }
 
   function createHourlyTable(hourly, containerId) {
@@ -547,10 +590,9 @@
   };
 
   function set_hvac_vent_temp(){
-      var r_temp = document.getElementById("req_t").value;
       var r_vent = document.getElementById("speedInput").dataset.value;
 
-      $.post("{{ url_for('hvac_api.hvac_data_set_vet_r_tmp') }}", {"user_set_temp": r_temp, "user_set_ventilation": r_vent}, function(data, textStatus) {
+      $.post("{{ url_for('hvac_api.hvac_data_set_vet_r_tmp') }}", {"user_set_temp": 0, "user_set_ventilation": r_vent}, function(data, textStatus) {
 
       }, "json");
 
@@ -601,6 +643,7 @@
 
     setInterval(hvac_data, 5000);
     setInterval(thermostat_data, 5000);
+    setInterval(shelly_thermostat_data, 5000);
     setInterval(home_data, 300000);
   };
 </script>
