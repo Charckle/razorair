@@ -189,6 +189,7 @@ def settings_edit():
         low_temp = app_config.get("low_temp_threshold", 0.0)
         shelly_src_id = app_config.get("shelly_src_id", str(uuid.uuid4()))
         shelly_thermostat_ip = app_config.get("shelly_thermostat_ip", "192.168.0.123")
+        systemair_hvac_ip = app_config.get("systemair_hvac_ip", "192.168.0.111")
     except Exception as e:
         app.logger.warn(f"{e}")
         error_msg = "Napaka pri nalaganju nastavitev."
@@ -202,7 +203,8 @@ def settings_edit():
                     high_temp_threshold=str(high_temp),
                     low_temp_threshold=str(low_temp),
                     shelly_src_id=shelly_src_id,
-                    shelly_thermostat_ip=shelly_thermostat_ip)
+                    shelly_thermostat_ip=shelly_thermostat_ip,
+                    systemair_hvac_ip=systemair_hvac_ip)
     
     # POST - save changes
     if form.validate_on_submit():
@@ -213,6 +215,7 @@ def settings_edit():
             app_config["low_temp_threshold"] = float(form.low_temp_threshold.data)
             app_config["shelly_src_id"] = form.shelly_src_id.data
             app_config["shelly_thermostat_ip"] = form.shelly_thermostat_ip.data.strip()
+            app_config["systemair_hvac_ip"] = form.systemair_hvac_ip.data.strip()
         except ValueError:
             flash('Invalid numeric values.', 'error')
             return redirect(url_for("main_page_module.settings_edit"))

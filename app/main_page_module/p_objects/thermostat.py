@@ -42,7 +42,8 @@ class Thermo:
         
         except RequestException as e:
             print(f"An error occurred: {e}")       
-            
+        
+        # če pride do errorja, vrže exception ampak spodaj ne nmore prebrat, ker ne dobi nikoli statusa od serverja, če ni opnline
         if response.status_code in [200, 201]:
             data_ = response.text.split(":")
             resp_json["temp_"] = int(data_[0])

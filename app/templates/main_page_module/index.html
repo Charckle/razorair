@@ -195,7 +195,7 @@
   function update_data(){
     home_data();
     hvac_data();
-    thermostat_data();
+    //thermostat_data();
     shelly_thermostat_data();
   }
 
@@ -646,7 +646,7 @@
 
   function thermostat_data(){
 
-    $.get("{{ url_for('hvac_api.thermostat_status_get') }}", {}, function(data, textStatus, jqXHR) {
+    $.get("", {}, function(data, textStatus, jqXHR) {
       //console.log(data["a"]);
 
       if (jqXHR.status == 200){
@@ -668,7 +668,7 @@
     update_data();
 
     setInterval(hvac_data, 5000);
-    setInterval(thermostat_data, 5000);
+    //setInterval(thermostat_data, 5000);
     setInterval(shelly_thermostat_data, 5000);
     setInterval(home_data, 300000);
   };

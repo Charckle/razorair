@@ -117,6 +117,7 @@ class Configuration(FlaskForm):
     low_temp_threshold = StringField('Low Temperature Threshold (°C)', [validators.InputRequired()])
     shelly_src_id = StringField('Shelly Source ID', [validators.InputRequired()])
     shelly_thermostat_ip = StringField('Shelly Thermostat IP', [validators.InputRequired()])
+    systemair_hvac_ip = StringField('Systemair HVAC IP', [validators.InputRequired()])
     
     submit = SubmitField('Save Changes')
 

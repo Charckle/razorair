@@ -115,7 +115,8 @@ class Gears_obj:
                 "high_temp_threshold": 30.0,
                 "low_temp_threshold": 0.0,
                 "shelly_src_id": str(uuid.uuid4()),
-                "shelly_thermostat_ip": "192.168.0.123"
+                "shelly_thermostat_ip": "192.168.0.123",
+                "systemair_hvac_ip": "192.168.0.111"
             }
             Gears_obj.save_app_config(default_config)
             return default_config    

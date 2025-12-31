@@ -54,16 +54,21 @@
           
           <hr>
           
-          <h5>Shelly Thermostat Settings</h5>
-          <p class="text-muted">Configuration for Shelly thermostat communication.</p>
+          <h5>Device IP Settings</h5>
+          <p class="text-muted">Configuration for device communication.</p>
           
           <div class="row mb-3">
-            <div class="col-md-6">
+            <div class="col-md-4">
               <label for="shelly_thermostat_ip" class="form-label">Shelly Thermostat IP Address</label>
               {{ form.shelly_thermostat_ip(class="form-control") }}
               <small class="form-text text-muted">IP address of the Shelly thermostat device (e.g., 192.168.0.123).</small>
             </div>
-            <div class="col-md-6">
+            <div class="col-md-4">
+              <label for="systemair_hvac_ip" class="form-label">Systemair HVAC IP Address</label>
+              {{ form.systemair_hvac_ip(class="form-control") }}
+              <small class="form-text text-muted">IP address of the Systemair HVAC device (e.g., 192.168.0.111).</small>
+            </div>
+            <div class="col-md-4">
               <label for="shelly_src_id" class="form-label">Shelly Source ID</label>
               {{ form.shelly_src_id(class="form-control") }}
               <small class="form-text text-muted">Source identifier for Shelly device communication (UUID format).</small>

@@ -46,6 +46,7 @@ class Sasc:
             data_json = t_data.json()
 
             temp_dict["outtake_temp"] = Sasc.get_right_temp(data_json["12543"])  # temp of the air exiting the rooms via the ducts
+            
             temp_dict["outside_temp"] = Sasc.get_right_temp(data_json["12101"])
             temp_dict["intake_temp"] = Sasc.get_right_temp(data_json["12102"])   # temp of the air going into the supply ducts
             temp_dict["overheat_temp"] = Sasc.get_right_temp(data_json["12107"]) # temp of the heater
@@ -89,10 +90,11 @@ class Sasc:
     @staticmethod
     def get_right_temp(temp):
         value = 0
+
         temp = int(temp)
-        
-        if temp >= 60000:
-            value = (temp* - 65536) / 10
+
+        if abs(temp) >= 60000:
+            value = (temp - 65536) / 10
         else:
             value = temp / 10
         

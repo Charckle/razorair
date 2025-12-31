@@ -47,7 +47,9 @@ def hvac_data_get():
     data_ = {}
     
     try:
-        hvac_obj = Sasc(app.config['SYSTEMAIR_SERVER'])
+        app_config = Gears_obj.load_app_config()
+        systemair_ip = app_config.get("systemair_hvac_ip", app.config.get('SYSTEMAIR_SERVER', '192.168.0.111'))
+        hvac_obj = Sasc(systemair_ip)
         hvac_data = hvac_obj.hvac_data()
         
         req_temperature = 24
@@ -73,37 +75,37 @@ def hvac_data_get():
         return "Error", 500
 
 
-@hvac_api.route('/thermostat_status_get', methods=['GET'])
-@login_required
-def thermostat_status_get():
-    data_ = {}
+# @hvac_api.route('/thermostat_status_get', methods=['GET'])
+# @login_required
+# def thermostat_status_get():
+#     data_ = {}
     
-    try:
-        thermo_obj = Thermo(app.config['THERMOSTAT_SERVER'])
-        thermo_status = thermo_obj.get_status()
+#     try:
+#         thermo_obj = Thermo(app.config['THERMOSTAT_SERVER'])
+#         thermo_status = thermo_obj.get_status()
                 
-        return jsonify(thermo_status), 200
+#         return jsonify(thermo_status), 200
     
-    except Exception as e:
-        app.logger.error(f"Error: {e}")      
-        return "Error", 500
+#     except Exception as e:
+#         app.logger.error(f"Error: {e}")      
+#         return "Error", 500
 
 
-@hvac_api.route('/thermostat_startstop/<status>', methods=['GET'])
-@login_required
-def thermostat_startstop(status:str):
-    data_ = {}
+# @hvac_api.route('/thermostat_startstop/<status>', methods=['GET'])
+# @login_required
+# def thermostat_startstop(status:str):
+#     data_ = {}
     
-    if status not in ["1","0"]:
-        status = "0"
-    try:
-        thermo_obj = Thermo(app.config['THERMOSTAT_SERVER'])
-        thermo_status = thermo_obj.set_on_off(status)
-        return jsonify(thermo_status), 200
+#     if status not in ["1","0"]:
+#         status = "0"
+#     try:
+#         thermo_obj = Thermo(app.config['THERMOSTAT_SERVER'])
+#         thermo_status = thermo_obj.set_on_off(status)
+#         return jsonify(thermo_status), 200
     
-    except Exception as e:
-        app.logger.error(f"Error: {e}")      
-        return "Error", 500
+#     except Exception as e:
+#         app.logger.error(f"Error: {e}")      
+#         return "Error", 500
 
 
 @hvac_api.route('/shelly_thermostat_status', methods=['GET'])
@@ -186,8 +188,10 @@ def hvac_data_set_vet_r_tmp():
         if user_set_ventilation not in [0, 2, 3, 4]:
             raise ValueError(f"Invalid number: {user_set_ventilation}. Must be 2, 3 or 4.")        
         
-                
-        hvac_obj = Sasc("192.168.0.111")
+        
+        app_config = Gears_obj.load_app_config()
+        systemair_ip = app_config.get("systemair_hvac_ip", app.config.get('SYSTEMAIR_SERVER', '192.168.0.111'))
+        hvac_obj = Sasc(systemair_ip)
         user_set_temp = user_set_temp * 10
         server_http_code = hvac_obj.set_hvac_temp_vent(user_set_ventilation, user_set_temp)
             
