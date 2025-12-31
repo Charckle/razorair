@@ -10,7 +10,7 @@ class Config(object):
     
     JWT_SECRET_KEY = environ.get('RAIR_JWT_SECRET_KEY', "sdf34tasdft34")
     
-    APP_NAME = environ.get('RAIR_APP_NAME', "Stribog Manager")
+    APP_NAME = environ.get('RAIR_APP_NAME', "Razor Air")
     
     ADMIN_USERNAME = environ.get('RAIR_ADMIN_USERNAME', "admin")
     # SHA512
@@ -21,10 +21,7 @@ class Config(object):
     SESSION_COOKIE_SECURE = True
     
     APP_LOGGING = environ.get('RAIR_APP_LOGGING', "INFO")    
-    SYSTEMAIR_SERVER = environ.get('SYSTEMAIR_SERVER', "127.0.0.1")    
-    THERMOSTAT_SERVER = environ.get('THERMOSTAT_SERVER', "127.0.0.1")
-    SHELLY_THERMOSTAT_SERVER = environ.get('SHELLY_THERMOSTAT_SERVER', "192.168.0.123")    
-    
+
     
     
 

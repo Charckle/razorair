@@ -8,8 +8,6 @@ from wtforms import BooleanField, StringField, TextAreaField, SelectField, Passw
 # Import Form validators
 from wtforms.validators import Email, EqualTo, ValidationError
 
-from app.main_page_module.models import UserM
-
 #email verification
 import re
 import os.path
@@ -68,15 +66,8 @@ class UserF(FlaskForm):
     def validate_email(self, email):
         regex = '^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$'
         
-        #check if it is a real email
-        if(re.search(regex,email.data)):  
-             #if it is, check if there is another user with the same email
-            user_sql = UserM.check_email(email.data) 
-            if user_sql != None:
-                if user_sql["id"] != int(self.id.data):
-                    raise ValidationError('Please use a different email address.')     
-        
-        else:  
+        #check if it is a valid email format
+        if not re.search(regex, email.data):  
             raise ValidationError('Please use a valid email address.')            
     
 
@@ -98,15 +89,8 @@ class UserProfileF(FlaskForm):
     def validate_email(self, email):
         regex = '^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$'
         
-        #check if it is a real email
-        if(re.search(regex,email.data)):  
-             #if it is, check if there is another user with the same email
-            user_sql = UserM.check_email(email.data) 
-            if user_sql != None:
-                if user_sql["id"] != int(self.id.data):
-                    raise ValidationError('Please use a different email address.')     
-        
-        else:  
+        #check if it is a valid email format
+        if not re.search(regex, email.data):  
             raise ValidationError('Please use a valid email address.')            
 
 
