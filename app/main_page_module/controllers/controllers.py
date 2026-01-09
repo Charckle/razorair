@@ -89,8 +89,12 @@ def calendar():
     all_archive_years = Gears_obj.get_years_with_events()
     archive_years = all_archive_years
     
+    # Also pass recurring event templates for the filter view
+    recurring_templates = Gears_obj.load_recurring_events()
+    
     return render_template("main_page_module/calendar.html", 
                          events=events, 
+                         recurring_templates=recurring_templates,
                          current_year=current_year,
                          archive_years=archive_years)
 

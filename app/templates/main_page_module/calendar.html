@@ -33,6 +33,8 @@
 <script>
   // Store events data in JavaScript for easy access
   var eventsData = {{ events|tojson }};
+  var recurringTemplates = {{ recurring_templates|tojson }};
+  var currentFilter = 'all'; // 'all', 'regular', 'recurring'
 </script>
 
 <div class="container-fluid">
@@ -40,7 +42,25 @@
   <div class="row">
     <!-- Left Column: Event List -->
     <div class="col-md-6">
-      <h4>Calendar Events - {{ current_year }}</h4>
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4 class="mb-0">Calendar Events - {{ current_year }}</h4>
+        <div class="btn-group" role="group" aria-label="Event filter">
+          <input type="radio" class="btn-check" name="eventFilter" id="filter-all" value="all" checked>
+          <label class="btn btn-outline-primary btn-sm" for="filter-all">
+            <i class="bi bi-list-ul"></i> All
+          </label>
+          
+          <input type="radio" class="btn-check" name="eventFilter" id="filter-regular" value="regular">
+          <label class="btn btn-outline-primary btn-sm" for="filter-regular">
+            <i class="bi bi-calendar-event"></i> Regular
+          </label>
+          
+          <input type="radio" class="btn-check" name="eventFilter" id="filter-recurring" value="recurring">
+          <label class="btn btn-outline-primary btn-sm" for="filter-recurring">
+            <i class="bi bi-arrow-repeat"></i> Recurring
+          </label>
+        </div>
+      </div>
       <hr>
       
       <div id="events_list">
@@ -87,8 +107,18 @@
           </div>
           {% endfor %}
         {% else %}
-          <p class="text-muted">No events found. Add an event using the form on the right.</p>
+          <p class="text-muted" id="no-events-message">No events found. Add an event using the form on the right.</p>
         {% endif %}
+      </div>
+      
+      <!-- Recurring Events Section (shown when filter is 'recurring') -->
+      <div id="recurring_templates_list" style="display: none;">
+        <hr>
+        <h5 class="mb-3"><i class="bi bi-arrow-repeat"></i> Recurring Event Templates</h5>
+        <p class="text-muted small mb-3">These are the templates for recurring events. Editing or deleting will affect all instances.</p>
+        <div id="recurring_templates_container">
+          <!-- Recurring templates will be rendered here by JavaScript -->
+        </div>
       </div>
     </div>
     
@@ -326,6 +356,173 @@
     // Scroll to form
     document.getElementById('event-form-container').scrollIntoView({ behavior: 'smooth' });
   }
+  
+  // Filter functionality
+  function filterEvents(filterType) {
+    currentFilter = filterType;
+    const eventsList = document.getElementById('events_list');
+    const recurringTemplatesList = document.getElementById('recurring_templates_list');
+    const noEventsMessage = document.getElementById('no-events-message');
+    
+    if (filterType === 'all') {
+      // Show all events
+      eventsList.style.display = 'block';
+      recurringTemplatesList.style.display = 'none';
+      
+      // Show all event cards
+      eventsData.forEach(event => {
+        const eventCard = document.getElementById(`event-${event.id}`);
+        if (eventCard) {
+          eventCard.style.display = 'block';
+        }
+      });
+      
+      // Show message if no events
+      const visibleEvents = Array.from(eventsList.querySelectorAll('.event-card')).filter(card => card.style.display !== 'none');
+      if (visibleEvents.length === 0 && eventsData.length === 0) {
+        if (noEventsMessage) noEventsMessage.style.display = 'block';
+      } else {
+        if (noEventsMessage) noEventsMessage.style.display = 'none';
+      }
+    } else if (filterType === 'regular') {
+      // Show only regular events (not recurring instances)
+      eventsList.style.display = 'block';
+      recurringTemplatesList.style.display = 'none';
+      
+      eventsData.forEach(event => {
+        const eventCard = document.getElementById(`event-${event.id}`);
+        if (eventCard) {
+          // Show only if not a recurring instance
+          if (event.is_recurring) {
+            eventCard.style.display = 'none';
+          } else {
+            eventCard.style.display = 'block';
+          }
+        }
+      });
+      
+      // Show message if no regular events
+      const visibleEvents = Array.from(eventsList.querySelectorAll('.event-card')).filter(card => card.style.display !== 'none');
+      if (visibleEvents.length === 0) {
+        if (noEventsMessage) {
+          noEventsMessage.textContent = 'No regular events found.';
+          noEventsMessage.style.display = 'block';
+        }
+      } else {
+        if (noEventsMessage) noEventsMessage.style.display = 'none';
+      }
+    } else if (filterType === 'recurring') {
+      // Show recurring templates
+      eventsList.style.display = 'none';
+      recurringTemplatesList.style.display = 'block';
+      
+      renderRecurringTemplates();
+    }
+  }
+  
+  // Render recurring templates
+  function renderRecurringTemplates() {
+    const container = document.getElementById('recurring_templates_container');
+    container.innerHTML = '';
+    
+    if (!recurringTemplates || recurringTemplates.length === 0) {
+      container.innerHTML = '<p class="text-muted">No recurring events found. Create a recurring event using the form on the right.</p>';
+      return;
+    }
+    
+    recurringTemplates.forEach(template => {
+      const card = document.createElement('div');
+      card.className = `card event-card border-${template.color}`;
+      card.id = `recurring-template-${template.id}`;
+      
+      const recurrenceTypeNames = {
+        'daily': 'Daily',
+        'weekly': 'Weekly',
+        'monthly': 'Monthly',
+        'yearly': 'Yearly'
+      };
+      
+      const recurrenceType = recurrenceTypeNames[template.recurrence_type] || template.recurrence_type;
+      const endDateText = template.recurrence_end_date 
+        ? ` (ends ${template.recurrence_end_date})` 
+        : ' (no end date)';
+      
+      card.innerHTML = `
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-start">
+            <div class="flex-grow-1" style="cursor: pointer;" onclick="window.location.href='/calendar/event/${template.id}'">
+              <div class="event-title text-${template.color}">
+                <i class="bi bi-arrow-repeat"></i> ${template.title}
+              </div>
+              <div class="event-date">
+                <i class="bi bi-calendar3"></i> ${template.date_start}
+                ${template.date_end !== template.date_start ? ' - ' + template.date_end : ''}
+                ${template.time_start ? '<i class="bi bi-clock ms-2"></i> ' + template.time_start : ''}
+                ${template.time_end ? ' - ' + template.time_end : ''}
+              </div>
+              <div class="mt-2">
+                <span class="badge bg-info">${recurrenceType}${endDateText}</span>
+              </div>
+              ${template.description ? `<div class="event-description mt-2">${template.description}</div>` : ''}
+            </div>
+            <div>
+              <button class="btn btn-sm btn-outline-secondary edit-recurring-btn" data-event-id="${template.id}">
+                <i class="bi bi-pencil"></i>
+              </button>
+              <button class="btn btn-sm btn-outline-danger delete-recurring-btn" data-event-id="${template.id}">
+                <i class="bi bi-trash"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+      
+      container.appendChild(card);
+    });
+    
+    // Add event listeners for edit/delete buttons
+    document.querySelectorAll('.edit-recurring-btn').forEach(btn => {
+      btn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        const eventId = this.dataset.eventId;
+        editEvent(eventId);
+      });
+    });
+    
+    document.querySelectorAll('.delete-recurring-btn').forEach(btn => {
+      btn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        const eventId = this.dataset.eventId;
+        
+        if (!confirm('Are you sure you want to delete this recurring event? This will delete all instances.')) {
+          return;
+        }
+        
+        fetch(`/api/calendar_event/${eventId}`, {
+          method: 'DELETE'
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.error) {
+            alert('Error: ' + data.error);
+          } else {
+            window.location.reload();
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          alert('Error deleting event');
+        });
+      });
+    });
+  }
+  
+  // Add event listeners to filter buttons
+  document.querySelectorAll('input[name="eventFilter"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+      filterEvents(this.value);
+    });
+  });
   
   // Check for edit query parameter on page load
   const urlParams = new URLSearchParams(window.location.search);
