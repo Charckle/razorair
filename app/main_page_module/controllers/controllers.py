@@ -28,6 +28,7 @@ import io
 import pathlib
 from passlib.hash import sha512_crypt
 import datetime
+from datetime import date
 
 
 # Define the blueprint: 'auth', set its url prefix: app.url/auth
@@ -52,6 +53,105 @@ def index():
 def hvac():
     
     return render_template("main_page_module/hvac.html", Open_W_obj=Open_W_obj)
+
+
+@main_page_module.route('/calendar', methods=['GET'])
+@login_required
+def calendar():
+    # Get current year events and filter out past events
+    current_year = datetime.date.today().year
+    today = datetime.date.today()
+    end_of_year = datetime.date(current_year, 12, 31)
+    
+    # Get regular events for current year
+    all_events = Gears_obj.load_calendar_events(current_year)
+    
+    # Filter out events that have ended (end_date < today)
+    events = []
+    for event in all_events:
+        # Skip recurring events (they're handled separately)
+        if event.get("recurrence_type") and event.get("recurrence_type") != "none":
+            continue
+        event_end = datetime.datetime.strptime(event["date_end"], "%Y-%m-%d").date()
+        if event_end >= today:
+            events.append(event)
+    
+    # Get recurring events and generate instances for current year
+    recurring_events = Gears_obj.load_recurring_events()
+    for recurring_event in recurring_events:
+        instances = Gears_obj.generate_recurring_instances(recurring_event, today, end_of_year)
+        events.extend(instances)
+    
+    # Sort events by date_start
+    events.sort(key=lambda x: x["date_start"])
+    
+    # Get all years with events for archive
+    all_archive_years = Gears_obj.get_years_with_events()
+    archive_years = all_archive_years
+    
+    return render_template("main_page_module/calendar.html", 
+                         events=events, 
+                         current_year=current_year,
+                         archive_years=archive_years)
+
+
+@main_page_module.route('/calendar/event/<event_id>', methods=['GET'])
+@login_required
+def calendar_event_view(event_id):
+    """View a single calendar event (including recurring events)"""
+    event = None
+    
+    # Check if it's a recurring event first
+    recurring_events = Gears_obj.load_recurring_events()
+    for e in recurring_events:
+        if e.get("id") == event_id:
+            event = e
+            break
+    
+    # If not found in recurring, check regular events
+    if not event:
+        for year in range(datetime.date.today().year - 1, datetime.date.today().year + 2):
+            events = Gears_obj.load_calendar_events(year)
+            for e in events:
+                if e.get("id") == event_id:
+                    event = e
+                    break
+            if event:
+                break
+    
+    if not event:
+        flash("Event not found.", 'error')
+        return redirect(url_for("main_page_module.calendar"))
+    
+    return render_template("main_page_module/calendar_event_view.html", event=event)
+
+
+@main_page_module.route('/calendar/archive/<int:year>', methods=['GET'])
+@login_required
+def calendar_archive(year):
+    """View archived events for a specific year"""
+    # Get regular events for the year
+    events = Gears_obj.load_calendar_events(year)
+    
+    # Get recurring events and generate instances for the year
+    recurring_events = Gears_obj.load_recurring_events()
+    year_start = datetime.date(year, 1, 1)
+    year_end = datetime.date(year, 12, 31)
+    
+    for recurring_event in recurring_events:
+        instances = Gears_obj.generate_recurring_instances(recurring_event, year_start, year_end)
+        events.extend(instances)
+    
+    # Sort events by date_start
+    events.sort(key=lambda x: x["date_start"])
+    
+    # Get all years with events for archive navigation
+    archive_years = Gears_obj.get_years_with_events()
+    
+    return render_template("main_page_module/calendar_archive.html", 
+                         events=events, 
+                         year=year,
+                         archive_years=archive_years)
 
 
 @main_page_module.route('/radar', methods=['GET'])
@@ -195,7 +295,7 @@ def settings_edit():
         error_msg = "Napaka pri nalaganju nastavitev."
         flash(error_msg, 'error')
         return redirect(url_for("main_page_module.index"))
-    
+        
     # GET - populate form
     if request.method == 'GET':
         form.process(current_location_latitude=str(current_lat),
@@ -229,8 +329,8 @@ def settings_edit():
     for field, errors in form.errors.items():
         app.logger.warn(f"Field: {field}")
         for error in errors:
-            flash(f'Invalid Data for {field}: {error}', 'error')
-    
+            flash(f'Invalid Data for {field}: {error}', 'error')    
+            
     return render_template("main_page_module/admin/settings_edit.html", 
                          form=form, 
                          cities=cities)
@@ -352,9 +452,8 @@ def login():
         else:
             session['user_id'] = 1
             
-            #set permanent login, if selected
-            if form.remember.data == True:
-                session.permanent = True
+            # Always set permanent session for persistent login
+            session.permanent = True
     
             error_msg = "Dobrodošel!"
             flash(error_msg, 'success')

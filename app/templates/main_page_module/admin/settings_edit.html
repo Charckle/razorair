@@ -19,10 +19,10 @@
         <!-- Current Location -->
         <form method="POST" action="{{ url_for('main_page_module.settings_edit') }}" accept-charset="UTF-8" role="form">
           {{ form.csrf_token }}
-          
+
           <h5>Current Location (Home Weather)</h5>
           <p class="text-muted">This location's weather will be displayed in the top section and used for hourly weather.</p>
-          
+
           <div class="row mb-3">
             <div class="col-md-4">
               <label for="current_location_latitude" class="form-label">Latitude</label>
@@ -51,7 +51,7 @@
               <small class="form-text text-muted">Warning if temperature falls below this value.</small>
             </div>
           </div>
-          
+
           <hr>
           
           <h5>Device IP Settings</h5>
@@ -77,9 +77,9 @@
           
           <div class="form-group">
             {{ form.submit(class="btn btn-primary mb-3") }}
-          </div>
+            </div>
         </form>
-        
+
         <hr>
         
         <!-- Cities List -->
@@ -119,7 +119,7 @@
               {% endfor %}
             </tbody>
           </table>
-        </div>
+      </div>
 
       </div>
       <div class="col-sm-1"></div>

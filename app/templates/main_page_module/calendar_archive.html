@@ -1,0 +1,166 @@
+{% extends "main_page_module/base.html" %}
+
+{% block extraheader %}
+<style>
+  .event-card {
+    margin-bottom: 15px;
+    border-left: 4px solid;
+  }
+  .event-date {
+    font-size: 0.9em;
+    color: #6c757d;
+  }
+  .event-title {
+    font-weight: bold;
+    margin-bottom: 5px;
+  }
+  .event-description {
+    font-size: 0.9em;
+    color: #495057;
+    white-space: pre-wrap;
+  }
+</style>
+{% endblock extraheader %}
+
+{% block nav_calendar %}text-secondary{% endblock nav_calendar %}
+
+{% block content %}
+
+<div class="container-fluid">
+  <br>
+  <div class="row">
+    <div class="col-md-10 offset-md-1">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4><i class="bi bi-archive"></i> Calendar Archive - {{ year }}</h4>
+        <div>
+          <a href="{{ url_for('main_page_module.calendar') }}" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Back to Calendar
+          </a>
+        </div>
+      </div>
+      
+      <!-- Archive Navigation -->
+      {% if archive_years %}
+      <div class="card mb-4">
+        <div class="card-header">
+          <h6 class="mb-0">Other Years</h6>
+        </div>
+        <div class="card-body">
+          <div class="d-flex flex-wrap gap-2">
+            {% for archive_year in archive_years %}
+              {% if archive_year == year %}
+              <span class="btn btn-primary btn-sm disabled">{{ archive_year }}</span>
+              {% else %}
+              <a href="{{ url_for('main_page_module.calendar_archive', year=archive_year) }}" class="btn btn-outline-secondary btn-sm">
+                {{ archive_year }}
+              </a>
+              {% endif %}
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+      {% endif %}
+      
+      <hr>
+      
+      <div id="events_list">
+        {% if events %}
+          {% for event in events %}
+          <div class="card event-card border-{{ event.color }}" id="event-{{ event.id }}" 
+               data-event-id="{{ event.id }}">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-start">
+                <div class="flex-grow-1" style="cursor: pointer;" onclick="window.location.href='{{ url_for('main_page_module.calendar_event_view', event_id=event.recurring_template_id if event.is_recurring else event.id) }}'">
+                  <div class="event-title text-{{ event.color }}">
+                    {% if event.is_recurring %}
+                      <i class="bi bi-arrow-repeat" title="Recurring event"></i> 
+                    {% endif %}
+                    {{ event.title }}
+                  </div>
+                  <div class="event-date">
+                    <i class="bi bi-calendar3"></i> 
+                    {{ event.date_start }}
+                    {% if event.time_start %}
+                      <i class="bi bi-clock ms-2"></i> {{ event.time_start }}
+                    {% endif %}
+                    {% if event.date_end != event.date_start %}
+                      - {{ event.date_end }}
+                    {% endif %}
+                    {% if event.time_end %}
+                      <i class="bi bi-clock ms-2"></i> {{ event.time_end }}
+                    {% endif %}
+                  </div>
+                  {% if event.description %}
+                  <div class="event-description mt-2">{{ event.description }}</div>
+                  {% endif %}
+                </div>
+                <div>
+                  <button class="btn btn-sm btn-outline-secondary edit-event-btn" data-event-id="{{ event.id }}">
+                    <i class="bi bi-pencil"></i>
+                  </button>
+                  <button class="btn btn-sm btn-outline-danger delete-event-btn" data-event-id="{{ event.id }}">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        {% else %}
+          <p class="text-muted">No events found for {{ year }}.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Store events data in JavaScript for easy access
+  var eventsData = {{ events|tojson }};
+  
+  function editEvent(eventId) {
+    // Redirect to calendar page with edit parameter
+    window.location.href = "{{ url_for('main_page_module.calendar') }}?edit=" + eventId;
+  }
+  
+  // Edit event
+  document.querySelectorAll('.edit-event-btn').forEach(btn => {
+    btn.addEventListener('click', function(e) {
+      e.stopPropagation(); // Prevent card click
+      const eventId = this.dataset.eventId;
+      editEvent(eventId);
+    });
+  });
+  
+  // Delete event
+  document.querySelectorAll('.delete-event-btn').forEach(btn => {
+    btn.addEventListener('click', function(e) {
+      e.stopPropagation(); // Prevent card click
+      if (!confirm('Are you sure you want to delete this event?')) {
+        return;
+      }
+      
+      const eventId = this.dataset.eventId;
+      
+      fetch(`/api/calendar_event/${eventId}`, {
+        method: 'DELETE'
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.error) {
+          alert('Error: ' + data.error);
+        } else {
+          // Reload page to refresh events
+          window.location.reload();
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        alert('Error deleting event');
+      });
+    });
+  });
+</script>
+
+{% endblock content %}
+

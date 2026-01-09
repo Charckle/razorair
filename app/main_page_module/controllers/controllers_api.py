@@ -29,6 +29,7 @@ import io
 import pathlib
 from passlib.hash import sha512_crypt
 import datetime
+from datetime import date, timedelta
 
 
 # Define the blueprint: 'auth', set its url prefix: app.url/auth
@@ -338,3 +339,214 @@ def weather(lat,long):
     data_["icon"] = current["icon"]
     
     return jsonify(data_)
+
+
+@hvac_api.route('/calendar_events', methods=['GET'])
+@login_required
+def calendar_events_get():
+    """Get calendar events for the next 14 days"""
+    try:
+        today = date.today()
+        end_date = today + timedelta(days=14)
+        events = Gears_obj.get_calendar_events_for_date_range(today, end_date)
+        return jsonify({"events": events}), 200
+    except Exception as e:
+        app.logger.error(f"Error getting calendar events: {e}")
+        return jsonify({"events": [], "error": str(e)}), 500
+
+
+@hvac_api.route('/calendar_event/<event_id>', methods=['GET'])
+@login_required
+def calendar_event_get(event_id):
+    """Get a single calendar event by ID (for editing)"""
+    try:
+        # Check recurring events first
+        recurring_events = Gears_obj.load_recurring_events()
+        for event in recurring_events:
+            if event.get("id") == event_id:
+                return jsonify({"event": event}), 200
+        
+        # Check regular events
+        for year in range(date.today().year - 1, date.today().year + 2):
+            events = Gears_obj.load_calendar_events(year)
+            for event in events:
+                if event.get("id") == event_id:
+                    return jsonify({"event": event}), 200
+        
+        return jsonify({"error": "Event not found"}), 404
+    except Exception as e:
+        app.logger.error(f"Error getting calendar event: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@hvac_api.route('/calendar_event', methods=['POST'])
+@login_required
+def calendar_event_create():
+    """Create a new calendar event"""
+    try:
+        data = request.get_json()
+        
+        # Validate required fields
+        required_fields = ['title', 'date_start', 'date_end', 'color']
+        for field in required_fields:
+            if field not in data:
+                return jsonify({"error": f"Missing required field: {field}"}), 400
+        
+        # Generate event ID
+        event_id = str(datetime.datetime.now().timestamp())
+        
+        # Create event object
+        event = {
+            "id": event_id,
+            "title": data["title"],
+            "description": data.get("description", ""),
+            "date_start": data["date_start"],
+            "date_end": data["date_end"],
+            "time_start": data.get("time_start"),
+            "time_end": data.get("time_end"),
+            "recurrence_type": data.get("recurrence_type", "none"),
+            "recurrence_end_date": data.get("recurrence_end_date"),
+            "color": data["color"]
+        }
+        
+        # If recurring, save to recurring.json, otherwise save to year file
+        recurrence_type = data.get("recurrence_type", "none")
+        if recurrence_type and recurrence_type != "none":
+            # Save as recurring event
+            recurring_events = Gears_obj.load_recurring_events()
+            recurring_events.append(event)
+            Gears_obj.save_recurring_events(recurring_events)
+        else:
+            # Save as regular event
+            start_year = datetime.datetime.strptime(data["date_start"], "%Y-%m-%d").year
+            events = Gears_obj.load_calendar_events(start_year)
+            events.append(event)
+            Gears_obj.save_calendar_events(start_year, events)
+        
+        return jsonify({"event": event, "message": "Event created successfully"}), 201
+    except Exception as e:
+        app.logger.error(f"Error creating calendar event: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@hvac_api.route('/calendar_event/<event_id>', methods=['PUT'])
+@login_required
+def calendar_event_update(event_id):
+    """Update an existing calendar event"""
+    try:
+        data = request.get_json()
+        
+        # Check if it's a recurring event first
+        recurring_events = Gears_obj.load_recurring_events()
+        for i, event in enumerate(recurring_events):
+            if event.get("id") == event_id:
+                # Update recurring event
+                updated_event = event.copy()
+                for key in data:
+                    updated_event[key] = data[key]
+                
+                # Check if recurrence type changed
+                new_recurrence_type = data.get("recurrence_type", updated_event.get("recurrence_type", "none"))
+                if new_recurrence_type == "none":
+                    # Convert to regular event - remove from recurring, add to year file
+                    recurring_events.pop(i)
+                    Gears_obj.save_recurring_events(recurring_events)
+                    
+                    # Add to regular events
+                    start_year = datetime.datetime.strptime(updated_event["date_start"], "%Y-%m-%d").year
+                    events = Gears_obj.load_calendar_events(start_year)
+                    events.append(updated_event)
+                    Gears_obj.save_calendar_events(start_year, events)
+                else:
+                    # Update in recurring
+                    recurring_events[i] = updated_event
+                    Gears_obj.save_recurring_events(recurring_events)
+                
+                return jsonify({"event": updated_event, "message": "Event updated successfully"}), 200
+        
+        # Not a recurring event, check regular events
+        for year in range(date.today().year - 1, date.today().year + 2):  # Check 3 years range
+            events = Gears_obj.load_calendar_events(year)
+            for i, event in enumerate(events):
+                if event.get("id") == event_id:
+                    # Check if it's becoming a recurring event
+                    new_recurrence_type = data.get("recurrence_type", "none")
+                    if new_recurrence_type != "none":
+                        # Convert to recurring - remove from year file, add to recurring
+                        events.pop(i)
+                        Gears_obj.save_calendar_events(year, events)
+                        
+                        # Add to recurring
+                        updated_event = event.copy()
+                        for key in data:
+                            updated_event[key] = data[key]
+                        recurring_events = Gears_obj.load_recurring_events()
+                        recurring_events.append(updated_event)
+                        Gears_obj.save_recurring_events(recurring_events)
+                        return jsonify({"event": updated_event, "message": "Event updated successfully"}), 200
+                    
+                    # Regular update
+                    new_year = year
+                    if "date_start" in data:
+                        new_year = datetime.datetime.strptime(data["date_start"], "%Y-%m-%d").year
+                    
+                    updated_event = event.copy()
+                    for key in data:
+                        updated_event[key] = data[key]
+                    
+                    # If year changed, move to new year
+                    if new_year != year:
+                        events.pop(i)
+                        Gears_obj.save_calendar_events(year, events)
+                        new_events = Gears_obj.load_calendar_events(new_year)
+                        new_events.append(updated_event)
+                        Gears_obj.save_calendar_events(new_year, new_events)
+                        return jsonify({"event": updated_event, "message": "Event updated successfully"}), 200
+                    else:
+                        events[i] = updated_event
+                        Gears_obj.save_calendar_events(year, events)
+                        return jsonify({"event": updated_event, "message": "Event updated successfully"}), 200
+        
+        # Event not found
+        return jsonify({"error": "Event not found"}), 404
+        
+    except Exception as e:
+        app.logger.error(f"Error updating calendar event: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@hvac_api.route('/calendar_event/<event_id>', methods=['DELETE'])
+@login_required
+def calendar_event_delete(event_id):
+    """Delete a calendar event (including recurring events)"""
+    try:
+        # Check if it's a recurring event first
+        recurring_events = Gears_obj.load_recurring_events()
+        for i, event in enumerate(recurring_events):
+            if event.get("id") == event_id:
+                recurring_events.pop(i)
+                Gears_obj.save_recurring_events(recurring_events)
+                return jsonify({"message": "Recurring event deleted successfully"}), 200
+        
+        # Check if it's an instance of a recurring event (has recurring_template_id)
+        # If so, delete the template
+        for i, event in enumerate(recurring_events):
+            if event.get("id") == event_id or event.get("id") == event_id.replace("_instance", ""):
+                recurring_events.pop(i)
+                Gears_obj.save_recurring_events(recurring_events)
+                return jsonify({"message": "Recurring event deleted successfully"}), 200
+        
+        # Not a recurring event, check regular events
+        for year in range(date.today().year - 1, date.today().year + 2):  # Check 3 years range
+            events = Gears_obj.load_calendar_events(year)
+            for i, event in enumerate(events):
+                if event.get("id") == event_id:
+                    events.pop(i)
+                    Gears_obj.save_calendar_events(year, events)
+                    return jsonify({"message": "Event deleted successfully"}), 200
+        
+        return jsonify({"error": "Event not found"}), 404
+        
+    except Exception as e:
+        app.logger.error(f"Error deleting calendar event: {e}")
+        return jsonify({"error": str(e)}), 500

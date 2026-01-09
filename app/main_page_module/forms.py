@@ -64,7 +64,7 @@ class UserF(FlaskForm):
     submit = SubmitField('Submit changes')
     
     def validate_email(self, email):
-        regex = '^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$'
+        regex = r'^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$'
         
         #check if it is a valid email format
         if not re.search(regex, email.data):  
@@ -87,7 +87,7 @@ class UserProfileF(FlaskForm):
     submit = SubmitField('Submit changes')
     
     def validate_email(self, email):
-        regex = '^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$'
+        regex = r'^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$'
         
         #check if it is a valid email format
         if not re.search(regex, email.data):  
@@ -114,11 +114,46 @@ class CityForm(FlaskForm):
     
     submit = SubmitField('Save City')
 
+
+class CalendarEventForm(FlaskForm):
+    event_id = HiddenField('event_id')
+    title = StringField('Title', [validators.InputRequired(), validators.Length(max=128)])
+    description = TextAreaField('Description', [validators.Optional(), validators.Length(max=500)])
+    date_start = StringField('Start Date', [validators.InputRequired()])
+    date_end = StringField('End Date', [validators.InputRequired()])
+    time_start = StringField('Start Time', [validators.Optional()])
+    time_end = StringField('End Time', [validators.Optional()])
+    recurrence_type = SelectField('Recurrence', 
+                       choices=[
+                           ('none', 'No Recurrence'),
+                           ('yearly', 'Yearly (e.g., birthdays)'),
+                           ('monthly', 'Monthly'),
+                           ('weekly', 'Weekly'),
+                           ('daily', 'Daily')
+                       ],
+                       default='none')
+    recurrence_end_date = StringField('Recurrence End Date (optional)', [validators.Optional()])
+    color = SelectField('Color', 
+                       choices=[
+                           ('primary', 'Blue'),
+                           ('secondary', 'Gray'),
+                           ('success', 'Green'),
+                           ('danger', 'Red'),
+                           ('warning', 'Yellow'),
+                           ('info', 'Cyan'),
+                           ('light', 'Light'),
+                           ('dark', 'Dark')
+                       ],
+                       default='primary')
+    
+    submit = SubmitField('Save Event')
+
  
 form_dicts = {"Weather": Weather,
               "HVACProgram": HVACProgram,
               "User": UserF,
               "Login": Login,
               "Configuration": Configuration,
-              "City": CityForm
+              "City": CityForm,
+              "CalendarEvent": CalendarEventForm
               } 

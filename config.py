@@ -1,5 +1,6 @@
 import sys
-from os import environ 
+from os import environ
+from datetime import timedelta 
 
 
 class Config(object):
@@ -19,6 +20,9 @@ class Config(object):
     ADMIN_PASS_HASH = environ.get('RAIR_ADMIN_PASS_HASH', "$6$rounds=656000$qVOc3MBGadAXOGky$D1ygzZeNsN3mu9Q.6hq1RdlAOsEctvLO5bdBBMncxdG9jlJX2kV2485sbol7E9uYmZKhPoI9bWwvM8bRQT2di.")
     
     SESSION_COOKIE_SECURE = True
+    PERMANENT_SESSION_LIFETIME = timedelta(days=30)  # Sessions last 30 days
+    SESSION_COOKIE_HTTPONLY = True
+    SESSION_COOKIE_SAMESITE = 'Lax'
     
     APP_LOGGING = environ.get('RAIR_APP_LOGGING', "INFO")    
 

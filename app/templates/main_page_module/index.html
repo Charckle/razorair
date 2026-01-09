@@ -60,7 +60,7 @@
         <legend>Opozorila</legend>
         <hr>
 
-        <div id="warnings_container" class="list-group">
+        <div id="warnings_container" class="list-group" style="overflow-y: auto; overflow-x: hidden; max-height: 300px;">
           <!-- Warnings will be dynamically inserted here -->
         </div>
         
@@ -219,38 +219,243 @@
       }
     }
 
-    // Render warnings
-    renderWarnings(warnings);
+    // Get calendar events and render warnings
+    calendar_events_data(function(calendarEvents) {
+      renderWarnings(warnings, calendarEvents);
+    });
 
     // Render all cities (daily weather only)
     renderCitiesWeather(cities);
   }
   
-  function renderWarnings(warnings) {
+  function calendar_events_data(callback) {
+    $.get("{{ url_for('hvac_api.calendar_events_get') }}", {}, function(data, textStatus, jqXHR) {
+      if (jqXHR.status == 200) {
+        var events = data["events"] || [];
+        if (callback) {
+          callback(events);
+        }
+      } else {
+        console.log("Error getting calendar events.");
+        if (callback) {
+          callback([]);
+        }
+      }
+    }, "json").fail(function() {
+      console.log("Error getting calendar events.");
+      if (callback) {
+        callback([]);
+      }
+    });
+  }
+  
+  function update_opozorila() {
+    // Get calendar events and render them
+    calendar_events_data(function(calendarEvents) {
+      // Also get warnings from home_data
+      $.get("{{ url_for('hvac_api.weather_home') }}", {}, function(data, textStatus, jqXHR) {
+        if (jqXHR.status == 200) {
+          var warnings = data["warnings"] || [];
+          renderWarnings(warnings, calendarEvents);
+        }
+      }, "json");
+    });
+  }
+  
+  function renderWarnings(warnings, calendarEvents) {
     var container = document.getElementById("warnings_container");
-    container.innerHTML = "";
-    
-    if (warnings.length === 0) {
+    if (!container) {
       return;
     }
+    container.innerHTML = "";
     
-    warnings.forEach(function(warning) {
-      var warningItem = document.createElement("a");
-      warningItem.href = "#";
-      warningItem.className = "list-group-item list-group-item-action list-group-item-warning";
+    var hasContent = false;
+    
+    // Render temperature warnings
+    if (warnings && warnings.length > 0) {
+      warnings.forEach(function(warning) {
+        var warningItem = document.createElement("a");
+        warningItem.href = "#";
+        warningItem.className = "list-group-item list-group-item-action list-group-item-warning";
+        
+        var icon = document.createElement("i");
+        if (warning.type === "high") {
+          icon.className = "bi bi-thermometer-high";
+        } else {
+          icon.className = "bi bi-thermometer-low";
+        }
+        warningItem.appendChild(icon);
+        
+        warningItem.appendChild(document.createTextNode(" " + warning.message));
+        
+        container.appendChild(warningItem);
+        hasContent = true;
+      });
+    }
+    
+    // Render calendar events - expand multi-day events to show on each day
+    if (calendarEvents && calendarEvents.length > 0) {
+      var today = new Date();
+      today.setHours(0, 0, 0, 0);
       
-      var icon = document.createElement("i");
-      if (warning.type === "high") {
-        icon.className = "bi bi-thermometer-high";
-      } else {
-        icon.className = "bi bi-thermometer-low";
-      }
-      warningItem.appendChild(icon);
+      // Expand multi-day events to show on each day they span
+      var expandedEvents = [];
+      calendarEvents.forEach(function(event) {
+        var startDate = new Date(event.date_start);
+        startDate.setHours(0, 0, 0, 0);
+        var endDate = new Date(event.date_end);
+        endDate.setHours(0, 0, 0, 0);
+        
+        var isMultiDay = endDate.getTime() !== startDate.getTime();
+        
+        // Calculate total number of days
+        var totalDays = 1;
+        if (isMultiDay) {
+          var tempDate = new Date(startDate);
+          while (tempDate.getTime() < endDate.getTime()) {
+            totalDays++;
+            tempDate.setDate(tempDate.getDate() + 1);
+          }
+        }
+        
+        // For each day the event spans, create a copy
+        var currentDate = new Date(startDate);
+        var dayNumber = 1;
+        while (currentDate.getTime() <= endDate.getTime()) {
+          var eventCopy = Object.assign({}, event);
+          eventCopy.displayDate = new Date(currentDate);
+          eventCopy.isMultiDay = isMultiDay;
+          eventCopy.isFirstDay = currentDate.getTime() === startDate.getTime();
+          eventCopy.isLastDay = currentDate.getTime() === endDate.getTime();
+          if (isMultiDay) {
+            eventCopy.dayNumber = dayNumber;
+            eventCopy.totalDays = totalDays;
+          }
+          expandedEvents.push(eventCopy);
+          
+          // Move to next day
+          currentDate.setDate(currentDate.getDate() + 1);
+          dayNumber++;
+        }
+      });
       
-      warningItem.appendChild(document.createTextNode(" " + warning.message));
+      // Sort by date, then by time if available
+      expandedEvents.sort(function(a, b) {
+        var dateDiff = a.displayDate.getTime() - b.displayDate.getTime();
+        if (dateDiff !== 0) return dateDiff;
+        
+        // If same date, sort by time
+        if (a.time_start && b.time_start) {
+          return a.time_start.localeCompare(b.time_start);
+        }
+        return 0;
+      });
       
-      container.appendChild(warningItem);
-    });
+      // Render expanded events
+      expandedEvents.forEach(function(event) {
+        var eventDate = event.displayDate;
+        var isToday = eventDate.getTime() === today.getTime();
+        
+        var eventItem = document.createElement("a");
+        // Use template ID for recurring events, regular ID for others
+        var eventId = event.is_recurring && event.recurring_template_id ? event.recurring_template_id : event.id;
+        eventItem.href = "/calendar/event/" + eventId;
+        eventItem.className = "list-group-item list-group-item-action border-" + event.color;
+        eventItem.style.borderLeftWidth = "4px";
+        
+        // Make today's events more prominent
+        if (isToday) {
+          eventItem.style.fontWeight = "bold";
+          eventItem.style.backgroundColor = "rgba(255, 193, 7, 0.1)"; // Light yellow highlight
+          eventItem.classList.add("fw-bold");
+        }
+        
+        // Add recurring event indicator
+        if (event.is_recurring) {
+          var recurringBadge = document.createElement("span");
+          recurringBadge.className = "badge bg-success text-white me-2";
+          recurringBadge.innerHTML = "<i class='bi bi-arrow-repeat'></i>";
+          recurringBadge.title = "Recurring event";
+          eventItem.appendChild(recurringBadge);
+        }
+        
+        // Add multi-day indicator badge with day counter
+        if (event.isMultiDay) {
+          var multiDayBadge = document.createElement("span");
+          multiDayBadge.className = "badge bg-info text-white me-2";
+          var badgeText = "(" + event.dayNumber + "/" + event.totalDays + ")";
+          if (event.isFirstDay) {
+            badgeText = "→ " + badgeText;
+            multiDayBadge.title = "Event starts - Day " + event.dayNumber + " of " + event.totalDays;
+          } else if (event.isLastDay) {
+            badgeText = "← " + badgeText;
+            multiDayBadge.title = "Event ends - Day " + event.dayNumber + " of " + event.totalDays;
+          } else {
+            badgeText = "↔ " + badgeText;
+            multiDayBadge.title = "Event continues - Day " + event.dayNumber + " of " + event.totalDays;
+          }
+          multiDayBadge.textContent = badgeText;
+          eventItem.appendChild(multiDayBadge);
+        }
+        
+        var icon = document.createElement("i");
+        icon.className = "bi bi-calendar3";
+        if (isToday) {
+          icon.className = "bi bi-calendar-check-fill"; // Different icon for today
+        }
+        icon.style.color = "var(--bs-" + event.color + ")";
+        eventItem.appendChild(icon);
+        
+        // Add "TODAY" badge for today's events
+        if (isToday) {
+          var todayBadge = document.createElement("span");
+          todayBadge.className = "badge bg-warning text-dark ms-2";
+          todayBadge.textContent = "TODAY";
+          eventItem.appendChild(todayBadge);
+        }
+        
+        var eventText = document.createElement("span");
+        if (isToday) {
+          eventText.style.fontWeight = "bold";
+        }
+        eventText.textContent = " " + event.title;
+        eventItem.appendChild(eventText);
+        
+        var dateSpan = document.createElement("span");
+        dateSpan.className = "text-muted ms-2";
+        // Show the date for this specific day
+        var dateText = eventDate.toLocaleDateString();
+        // Show time only on first day (or if it's a single day event)
+        if (event.time_start && (event.isFirstDay || !event.isMultiDay)) {
+          dateText += " " + event.time_start;
+          if (event.time_end) {
+            dateText += " - " + event.time_end;
+          }
+        }
+        // If multi-day, show date range info
+        if (event.isMultiDay) {
+          if (event.isFirstDay) {
+            dateText += " (until " + new Date(event.date_end).toLocaleDateString() + ")";
+          } else if (event.isLastDay) {
+            dateText += " (from " + new Date(event.date_start).toLocaleDateString() + ")";
+          } else {
+            dateText += " (continues)";
+          }
+        }
+        dateSpan.textContent = " (" + dateText + ")";
+        eventItem.appendChild(dateSpan);
+        
+        container.appendChild(eventItem);
+        hasContent = true;
+      });
+    }
+    
+    if (!hasContent) {
+      var noContentItem = document.createElement("div");
+      noContentItem.className = "list-group-item text-muted text-center";
+      noContentItem.textContent = "No warnings or upcoming events";
+      container.appendChild(noContentItem);
+    }
   }
   
   function renderCitiesWeather(cities) {
@@ -671,6 +876,8 @@
     //setInterval(thermostat_data, 5000);
     setInterval(shelly_thermostat_data, 5000);
     setInterval(home_data, 300000);
+    // Refresh Opozorila section every minute (60000 ms)
+    setInterval(update_opozorila, 60000);
   };
 </script>
 

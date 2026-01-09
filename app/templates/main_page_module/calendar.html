@@ -1,0 +1,403 @@
+{% extends "main_page_module/base.html" %}
+
+{% block extraheader %}
+<style>
+  .event-card {
+    margin-bottom: 15px;
+    border-left: 4px solid;
+  }
+  .event-date {
+    font-size: 0.9em;
+    color: #6c757d;
+  }
+  .event-title {
+    font-weight: bold;
+    margin-bottom: 5px;
+  }
+  .event-description {
+    font-size: 0.9em;
+    color: #495057;
+    white-space: pre-wrap;
+  }
+  #event-form-container {
+    position: sticky;
+    top: 20px;
+  }
+</style>
+{% endblock extraheader %}
+
+{% block nav_calendar %}text-secondary{% endblock nav_calendar %}
+
+{% block content %}
+
+<script>
+  // Store events data in JavaScript for easy access
+  var eventsData = {{ events|tojson }};
+</script>
+
+<div class="container-fluid">
+  <br>
+  <div class="row">
+    <!-- Left Column: Event List -->
+    <div class="col-md-6">
+      <h4>Calendar Events - {{ current_year }}</h4>
+      <hr>
+      
+      <div id="events_list">
+        {% if events %}
+          {% for event in events %}
+          <div class="card event-card border-{{ event.color }}" id="event-{{ event.id }}" 
+               data-event-id="{{ event.id }}">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-start">
+                <div class="flex-grow-1" style="cursor: pointer;" onclick="window.location.href='{{ url_for('main_page_module.calendar_event_view', event_id=event.recurring_template_id if event.is_recurring else event.id) }}'">
+                  <div class="event-title text-{{ event.color }}">
+                    {% if event.is_recurring %}
+                      <i class="bi bi-arrow-repeat" title="Recurring event"></i> 
+                    {% endif %}
+                    {{ event.title }}
+                  </div>
+                  <div class="event-date">
+                    <i class="bi bi-calendar3"></i> 
+                    {{ event.date_start }}
+                    {% if event.time_start %}
+                      <i class="bi bi-clock ms-2"></i> {{ event.time_start }}
+                    {% endif %}
+                    {% if event.date_end != event.date_start %}
+                      - {{ event.date_end }}
+                    {% endif %}
+                    {% if event.time_end %}
+                      <i class="bi bi-clock ms-2"></i> {{ event.time_end }}
+                    {% endif %}
+                  </div>
+                  {% if event.description %}
+                  <div class="event-description mt-2">{{ event.description }}</div>
+                  {% endif %}
+                </div>
+                <div>
+                  <button class="btn btn-sm btn-outline-secondary edit-event-btn" data-event-id="{{ event.id }}">
+                    <i class="bi bi-pencil"></i>
+                  </button>
+                  <button class="btn btn-sm btn-outline-danger delete-event-btn" data-event-id="{{ event.id }}">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        {% else %}
+          <p class="text-muted">No events found. Add an event using the form on the right.</p>
+        {% endif %}
+      </div>
+    </div>
+    
+    <!-- Right Column: Add/Edit Event Form -->
+    <div class="col-md-6">
+      <!-- Archive Section - Always visible -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <h5 class="mb-0"><i class="bi bi-archive"></i> Archive</h5>
+        </div>
+        <div class="card-body">
+          {% if archive_years %}
+            <p class="text-muted small mb-2">View events from previous years:</p>
+            <div class="d-flex flex-wrap gap-2">
+              {% for year in archive_years %}
+                <a href="{{ url_for('main_page_module.calendar_archive', year=year) }}" class="btn btn-outline-secondary btn-sm">
+                  {{ year }}
+                </a>
+              {% endfor %}
+            </div>
+          {% else %}
+            <p class="text-muted small mb-0">No archived events yet. Past events will appear here.</p>
+          {% endif %}
+        </div>
+      </div>
+      
+      <div id="event-form-container">
+        <h4 id="form-title">Add New Event</h4>
+        <hr>
+        
+        <form id="event-form">
+          <input type="hidden" id="event_id" name="event_id" value="">
+          
+          <div class="mb-3">
+            <label for="title" class="form-label">Title <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" id="title" name="title" required>
+          </div>
+          
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label for="date_start" class="form-label">Start Date <span class="text-danger">*</span></label>
+              <input type="date" class="form-control" id="date_start" name="date_start" required>
+            </div>
+            <div class="col-md-6">
+              <label for="date_end" class="form-label">End Date <span class="text-danger">*</span></label>
+              <input type="date" class="form-control" id="date_end" name="date_end" required>
+            </div>
+          </div>
+          
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label for="time_start" class="form-label">Start Time (optional)</label>
+              <input type="time" class="form-control" id="time_start" name="time_start">
+            </div>
+            <div class="col-md-6">
+              <label for="time_end" class="form-label">End Time (optional)</label>
+              <input type="time" class="form-control" id="time_end" name="time_end">
+            </div>
+          </div>
+          
+          <div class="mb-3">
+            <label for="description" class="form-label">Description</label>
+            <textarea class="form-control" id="description" name="description" rows="4"></textarea>
+          </div>
+          
+          <div class="mb-3">
+            <label for="recurrence_type" class="form-label">Recurrence</label>
+            <select class="form-select" id="recurrence_type" name="recurrence_type">
+              <option value="none">No Recurrence</option>
+              <option value="yearly">Yearly (e.g., birthdays)</option>
+              <option value="monthly">Monthly</option>
+              <option value="weekly">Weekly</option>
+              <option value="daily">Daily</option>
+            </select>
+            <small class="form-text text-muted">Recurring events repeat automatically</small>
+          </div>
+          
+          <div class="mb-3" id="recurrence_end_date_container" style="display: none;">
+            <label for="recurrence_end_date" class="form-label">Recurrence End Date (optional)</label>
+            <input type="date" class="form-control" id="recurrence_end_date" name="recurrence_end_date">
+            <small class="form-text text-muted">Leave empty for no end date</small>
+          </div>
+          
+          <div class="mb-3">
+            <label for="color" class="form-label">Color <span class="text-danger">*</span></label>
+            <select class="form-select" id="color" name="color" required>
+              <option value="primary">Blue</option>
+              <option value="secondary">Gray</option>
+              <option value="success">Green</option>
+              <option value="danger">Red</option>
+              <option value="warning">Yellow</option>
+              <option value="info">Cyan</option>
+              <option value="light">Light</option>
+              <option value="dark">Dark</option>
+            </select>
+          </div>
+          
+          <div class="d-grid gap-2">
+            <button type="submit" class="btn btn-primary" id="submit-btn">Save Event</button>
+            <button type="button" class="btn btn-secondary" id="cancel-btn" style="display: none;">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Set default date_start to today
+  document.getElementById('date_start').valueAsDate = new Date();
+  
+  // Auto-update date_end when date_start changes - always set to same date
+  document.getElementById('date_start').addEventListener('change', function() {
+    const dateStart = document.getElementById('date_start').value;
+    const dateEnd = document.getElementById('date_end');
+    
+    // Always update end date to match start date
+    dateEnd.value = dateStart;
+  });
+  
+  // Initialize date_end with today's date
+  document.getElementById('date_end').valueAsDate = new Date();
+  
+  // Show/hide recurrence end date field based on recurrence type
+  document.getElementById('recurrence_type').addEventListener('change', function() {
+    const recurrenceEndContainer = document.getElementById('recurrence_end_date_container');
+    if (this.value !== 'none') {
+      recurrenceEndContainer.style.display = 'block';
+    } else {
+      recurrenceEndContainer.style.display = 'none';
+      document.getElementById('recurrence_end_date').value = '';
+    }
+  });
+  
+  // Form submission
+  document.getElementById('event-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const eventId = document.getElementById('event_id').value;
+    const formData = {
+      title: document.getElementById('title').value,
+      date_start: document.getElementById('date_start').value,
+      date_end: document.getElementById('date_end').value,
+      time_start: document.getElementById('time_start').value || null,
+      time_end: document.getElementById('time_end').value || null,
+      description: document.getElementById('description').value,
+      recurrence_type: document.getElementById('recurrence_type').value,
+      recurrence_end_date: document.getElementById('recurrence_end_date').value || null,
+      color: document.getElementById('color').value
+    };
+    
+    const url = eventId ? `/api/calendar_event/${eventId}` : '/api/calendar_event';
+    const method = eventId ? 'PUT' : 'POST';
+    
+    fetch(url, {
+      method: method,
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(formData)
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.error) {
+        alert('Error: ' + data.error);
+      } else {
+        // Reload page to refresh events
+        window.location.reload();
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      alert('Error saving event');
+    });
+  });
+  
+  function editEvent(eventId) {
+    // Find event in eventsData - check both regular ID and recurring template ID
+    let event = eventsData.find(e => e.id === eventId);
+    
+    // If not found, check if it's a recurring instance (look for template_id)
+    if (!event) {
+      event = eventsData.find(e => e.recurring_template_id === eventId);
+      if (event) {
+        // For recurring instances, we need to load the template from the server
+        fetch(`/api/calendar_event/${eventId}`)
+          .then(response => response.json())
+          .then(data => {
+            if (data.event) {
+              populateEditForm(data.event);
+            } else {
+              alert('Event not found');
+            }
+          })
+          .catch(error => {
+            console.error('Error:', error);
+            alert('Error loading event');
+          });
+        return;
+      }
+    }
+    
+    if (event) {
+      // For recurring instances, use the template ID
+      const editId = event.is_recurring && event.recurring_template_id ? event.recurring_template_id : event.id;
+      populateEditForm(event, editId);
+    }
+  }
+  
+  function populateEditForm(event, editId = null) {
+    const eventId = editId || event.id;
+    document.getElementById('event_id').value = eventId;
+    document.getElementById('title').value = event.title || '';
+    document.getElementById('date_start').value = event.date_start || '';
+    document.getElementById('date_end').value = event.date_end || '';
+    document.getElementById('time_start').value = event.time_start || '';
+    document.getElementById('time_end').value = event.time_end || '';
+    document.getElementById('description').value = event.description || '';
+    document.getElementById('recurrence_type').value = event.recurrence_type || 'none';
+    document.getElementById('recurrence_end_date').value = event.recurrence_end_date || '';
+    
+    // Show/hide recurrence end date field
+    const recurrenceEndContainer = document.getElementById('recurrence_end_date_container');
+    if (event.recurrence_type && event.recurrence_type !== 'none') {
+      recurrenceEndContainer.style.display = 'block';
+    } else {
+      recurrenceEndContainer.style.display = 'none';
+    }
+    
+    document.getElementById('color').value = event.color || 'primary';
+    document.getElementById('form-title').textContent = 'Edit Event';
+    document.getElementById('submit-btn').textContent = 'Update Event';
+    document.getElementById('cancel-btn').style.display = 'block';
+    
+    // Scroll to form
+    document.getElementById('event-form-container').scrollIntoView({ behavior: 'smooth' });
+  }
+  
+  // Check for edit query parameter on page load
+  const urlParams = new URLSearchParams(window.location.search);
+  const editEventId = urlParams.get('edit');
+  if (editEventId) {
+    setTimeout(function() {
+      editEvent(editEventId);
+    }, 100);
+  }
+  
+  // Edit event
+  document.querySelectorAll('.edit-event-btn').forEach(btn => {
+    btn.addEventListener('click', function(e) {
+      e.stopPropagation(); // Prevent card click
+      const eventId = this.dataset.eventId;
+      editEvent(eventId);
+    });
+  });
+  
+  // Delete event
+  document.querySelectorAll('.delete-event-btn').forEach(btn => {
+    btn.addEventListener('click', function(e) {
+      e.stopPropagation(); // Prevent card click
+      const eventId = this.dataset.eventId;
+      
+      // Find the event to check if it's recurring
+      const event = eventsData.find(e => e.id === eventId);
+      const deleteId = event && event.is_recurring && event.recurring_template_id ? event.recurring_template_id : eventId;
+      
+      const confirmMessage = event && event.is_recurring 
+        ? 'Are you sure you want to delete this recurring event? This will delete all instances.'
+        : 'Are you sure you want to delete this event?';
+      
+      if (!confirm(confirmMessage)) {
+        return;
+      }
+      
+      fetch(`/api/calendar_event/${deleteId}`, {
+        method: 'DELETE'
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.error) {
+          alert('Error: ' + data.error);
+        } else {
+          // Reload page to refresh events (since recurring events may have multiple instances)
+          window.location.reload();
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        alert('Error deleting event');
+      });
+    });
+  });
+  
+  // Cancel button
+  document.getElementById('cancel-btn').addEventListener('click', function() {
+    document.getElementById('event-form').reset();
+    document.getElementById('event_id').value = '';
+    document.getElementById('form-title').textContent = 'Add New Event';
+    document.getElementById('submit-btn').textContent = 'Save Event';
+    this.style.display = 'none';
+    document.getElementById('date_start').valueAsDate = new Date();
+    document.getElementById('date_end').valueAsDate = new Date();
+    document.getElementById('time_start').value = '';
+    document.getElementById('time_end').value = '';
+    document.getElementById('recurrence_type').value = 'none';
+    document.getElementById('recurrence_end_date').value = '';
+    document.getElementById('recurrence_end_date_container').style.display = 'none';
+  });
+</script>
+
+{% endblock content %}
+
