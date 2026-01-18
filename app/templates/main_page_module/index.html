@@ -9,10 +9,18 @@
 
 {% block content%}
 
+  <!-- Backend Server Availability Alert Banner -->
+  <div id="backend-server-alert" class="alert alert-danger alert-dismissible fade show d-none" role="alert" style="margin-bottom: 0; border-radius: 0;">
+    <div class="container-fluid">
+      <strong><i class="bi bi-exclamation-triangle-fill"></i> Backend Server Offline</strong> - Cannot communicate with the backend server. Some features may not work correctly.
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  </div>
+
   <!-- Shelly Thermostat Server Availability Alert Banner -->
   <div id="shelly-server-alert" class="alert alert-danger alert-dismissible fade show d-none" role="alert" style="margin-bottom: 0; border-radius: 0;">
     <div class="container-fluid">
-      <strong><i class="bi bi-exclamation-triangle-fill"></i> Shelly Thermostat Server Unavailable</strong> - The Shelly thermostat server is not responding. Thermostat features may not work correctly.
+      <strong><i class="bi bi-exclamation-triangle-fill"></i> Shelly Thermostat Device Unavailable</strong> - The Shelly thermostat device is not responding. Thermostat features may not work correctly.
       <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
   </div>
@@ -20,7 +28,7 @@
   <!-- HVAC Server Availability Alert Banner -->
   <div id="hvac-server-alert" class="alert alert-warning alert-dismissible fade show d-none" role="alert" style="margin-bottom: 0; border-radius: 0;">
     <div class="container-fluid">
-      <strong><i class="bi bi-exclamation-triangle-fill"></i> HVAC Server Unavailable</strong> - The HVAC server is not responding. HVAC features may not work correctly.
+      <strong><i class="bi bi-exclamation-triangle-fill"></i> HVAC Device Unavailable</strong> - The HVAC device is not responding. HVAC features may not work correctly.
       <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
   </div>
@@ -208,21 +216,34 @@
 
 
 <script>
-  // Server availability tracking for Shelly and HVAC
+  // Server availability tracking for Backend, Shelly and HVAC
   var serverStatus = {
+    backend: { isAvailable: true, lastCheck: null },
     shelly: { isAvailable: true, lastCheck: null },
     hvac: { isAvailable: true, lastCheck: null }
   };
 
+  function showBackendAlert() {
+    var alertElement = document.getElementById('backend-server-alert');
+    if (alertElement) {
+      alertElement.classList.remove('d-none');
+      serverStatus.backend.isAvailable = false;
+    }
+  }
+
+  function hideBackendAlert() {
+    var alertElement = document.getElementById('backend-server-alert');
+    if (alertElement) {
+      alertElement.classList.add('d-none');
+      serverStatus.backend.isAvailable = true;
+    }
+  }
+
   function showShellyAlert() {
-    console.log('showShellyAlert called');
     var alertElement = document.getElementById('shelly-server-alert');
     if (alertElement) {
       alertElement.classList.remove('d-none');
       serverStatus.shelly.isAvailable = false;
-      console.log('Shelly alert shown');
-    } else {
-      console.error('Shelly alert element not found!');
     }
   }
 
@@ -235,14 +256,10 @@
   }
 
   function showHVACAlert() {
-    console.log('showHVACAlert called');
     var alertElement = document.getElementById('hvac-server-alert');
     if (alertElement) {
       alertElement.classList.remove('d-none');
       serverStatus.hvac.isAvailable = false;
-      console.log('HVAC alert shown');
-    } else {
-      console.error('HVAC alert element not found!');
     }
   }
 
@@ -255,68 +272,94 @@
   }
 
   function checkServerAvailabilityFromResponse(jqXHR, textStatus, errorThrown, serverType) {
-    // Check if it's a server unavailability issue
-    // Network errors (0 status) or 5xx errors (especially 503) indicate server issues
+    // Distinguish between backend offline vs device offline
     // serverType: 'shelly' or 'hvac'
-    var isServerUnavailable = false;
     
-    console.log('checkServerAvailabilityFromResponse:', {status: jqXHR ? jqXHR.status : 'no jqXHR', textStatus: textStatus, serverType: serverType});
-    
-    if (!jqXHR) {
-      // No response object - network error
-      isServerUnavailable = true;
-    } else if (jqXHR.status === 0) {
-      // Network error - server unreachable
-      isServerUnavailable = true;
-    } else if (jqXHR.status >= 500 && jqXHR.status < 600) {
-      // Server error (500, 502, 503 Service Unavailable, 504, etc.)
-      isServerUnavailable = true;
-    } else if (textStatus === 'error' && errorThrown && errorThrown.toLowerCase().includes('network')) {
-      // Network-related errors
-      isServerUnavailable = true;
-    } else if (textStatus === 'parsererror' && jqXHR.status >= 400) {
-      // Could also indicate server issues
-      isServerUnavailable = true;
+    // Check if we have a valid response object with a status code
+    // No jqXHR or status 0 means complete network failure (backend offline)
+    if (!jqXHR || jqXHR.status === 0) {
+      showBackendAlert();
+      return true; // Backend is offline
     }
     
-    console.log('isServerUnavailable:', isServerUnavailable, 'for', serverType);
+    // We have a response - backend is reachable, hide backend alert
+    hideBackendAlert();
     
-    if (isServerUnavailable) {
+    // Now check the actual HTTP status code
+    if (jqXHR.status === 503) {
+      // 503 means backend is online but device is unreachable
       if (serverType === 'shelly') {
-        console.log('Showing Shelly alert');
         showShellyAlert();
       } else if (serverType === 'hvac') {
-        console.log('Showing HVAC alert');
         showHVACAlert();
       }
-    } else {
+      return true; // Device is offline
+    } else if (jqXHR.status >= 500 && jqXHR.status < 600 && jqXHR.status !== 503) {
+      // Other 5xx errors (except 503) indicate backend issues
+      showBackendAlert();
+      return true;
+    } else if (jqXHR.status === 200) {
+      // Success - hide device alerts
       if (serverType === 'shelly') {
         hideShellyAlert();
       } else if (serverType === 'hvac') {
         hideHVACAlert();
       }
+      return false;
+    } else {
+      // Other status codes - assume device is okay
+      if (serverType === 'shelly') {
+        hideShellyAlert();
+      } else if (serverType === 'hvac') {
+        hideHVACAlert();
+      }
+      return false;
     }
-    
-    return isServerUnavailable;
   }
 
   function checkServerAvailabilityFromFetch(response, serverType) {
     // For fetch API
     // serverType: 'shelly' or 'hvac'
-    if (!response || response.status === 0 || (response.status >= 500 && response.status < 600)) {
+    
+    // If we can't get a response at all, backend is offline
+    if (!response || response.status === 0) {
+      showBackendAlert();
+      return false;
+    }
+    
+    // Backend is reachable - hide backend alert
+    hideBackendAlert();
+    
+    // Check response status
+    if (response.status === 503) {
+      // 503 means backend is online but device is unreachable
       if (serverType === 'shelly') {
         showShellyAlert();
       } else if (serverType === 'hvac') {
         showHVACAlert();
       }
       return false;
+    } else if (response.status >= 500 && response.status < 600 && response.status !== 503) {
+      // Other 5xx errors (except 503) might indicate backend issues
+      showBackendAlert();
+      return false;
+    } else if (response.status === 200) {
+      // Success - hide device alerts
+      if (serverType === 'shelly') {
+        hideShellyAlert();
+      } else if (serverType === 'hvac') {
+        hideHVACAlert();
+      }
+      return true;
+    } else {
+      // Other status codes - assume device is okay
+      if (serverType === 'shelly') {
+        hideShellyAlert();
+      } else if (serverType === 'hvac') {
+        hideHVACAlert();
+      }
+      return true;
     }
-    if (serverType === 'shelly') {
-      hideShellyAlert();
-    } else if (serverType === 'hvac') {
-      hideHVACAlert();
-    }
-    return true;
   }
 
   function update_data(){
@@ -939,7 +982,8 @@
       })
       .catch(error => {
         console.error('Fetch error:', error);
-        showShellyAlert();
+        // Network errors indicate backend is offline
+        showBackendAlert();
         alert('Error: ' + error.message);
       });
   }
