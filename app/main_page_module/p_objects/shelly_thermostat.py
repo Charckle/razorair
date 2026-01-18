@@ -47,7 +47,17 @@ class ShellyThermostat:
             )
             response.raise_for_status()
             return response.json()
-        except (ConnectionError, Timeout, RequestException, Exception):
+        except ConnectionError:
+            print(f"Failed to connect to Shelly thermostat ({self.server_ip}). Please check your internet connection or the server's availability.")
+            return None
+        except Timeout:
+            print(f"The Shelly thermostat ({self.server_ip}) request timed out. The server might be too slow or unresponsive.")
+            return None
+        except RequestException as e:
+            print(f"An error occurred connecting to Shelly thermostat ({self.server_ip}): {e}")
+            return None
+        except Exception as e:
+            print(f"Unexpected error connecting to Shelly thermostat ({self.server_ip}): {e}")
             return None
     
     def get_status(self):

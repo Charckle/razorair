@@ -23,6 +23,7 @@ class Sasc:
         try:
             url = f"http://{self.server_ip}" + "/mread?{%223021%22:1,%2211000%22:7,%2211100%22:6,%2211200%22:6,%2212100%22:8,%2212135%22:1,%2212150%22:6,%2212160%22:6,%2212400%22:2,%2212542%22:1,%2212543%22:1,%222000%22:1,%221130%22:1,%222148%22:1, %224101%22:1,%2213310%22:5}"
             #url = f"http://{self.server_ip}" + "/mread?{%223021%22:1,%2211000%22:7,%2211100%22:6,%2211200%22:6,%2212100%22:8,%2212135%22:1,%2212150%22:6,%2212160%22:6,%2212400%22:2,%2212542%22:1,%2212543%22:1,%222000%22:1,%221130%22:1,%222148%22:1, %224101%22:1,%2213310%22:5}"
+            
             response = requests.get(url, timeout=5)  # You can adjust the timeout as needed
             response.raise_for_status()  # Raises HTTPError for bad responses (4xx or 5xx)
             #print(response.text)  # Handle the response here
@@ -62,29 +63,24 @@ class Sasc:
     
     
     def set_hvac_temp_vent(self, vent_s, r_temp):
-        t_data = 404
-        
         try:
             url = f"http://{self.server_ip}" + "/mwrite?{\"1130\":" + str(vent_s) + ",\"2000\":" + str(r_temp) + "}"
-
+            
             response = requests.get(url, timeout=5)  # You can adjust the timeout as needed
             response.raise_for_status()  # Raises HTTPError for bad responses (4xx or 5xx)
-            #print(response.text)  # Handle the response here
-            t_data = response
+            return response.status_code
         
         except ConnectionError:
-            print("Failed to connect to the server. Please check your internet connection or the server's availability.")
+            print(f"Failed to connect to HVAC server ({self.server_ip}). Please check your internet connection or the server's availability.")
+            return 404
         
         except Timeout:
-            print("The request timed out. The server might be too slow or unresponsive.")
+            print(f"The HVAC server ({self.server_ip}) request timed out. The server might be too slow or unresponsive.")
+            return 408
         
         except RequestException as e:
-            print(f"An error occurred: {e}")
-                
-        temp_dict = {}
-                                
-        
-        return t_data.status_code  
+            print(f"An error occurred connecting to HVAC server ({self.server_ip}): {e}")
+            return 500  
     
     
     @staticmethod

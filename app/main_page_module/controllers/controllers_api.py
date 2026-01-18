@@ -53,6 +53,12 @@ def hvac_data_get():
         hvac_obj = Sasc(systemair_ip)
         hvac_data = hvac_obj.hvac_data()
         
+        # Check if HVAC data is empty (device unreachable)
+        # Empty dict means connection failed - all exceptions were caught and t_data stayed None
+        if hvac_data == {}:
+            app.logger.warning(f"HVAC server ({systemair_ip}) returned empty data - device may be unreachable")
+            return jsonify({"error": "HVAC device unreachable", "data": {}}), 503
+        
         req_temperature = 24
         req_ventilation = 3
         stat_recuperator = True
@@ -72,8 +78,8 @@ def hvac_data_get():
         return jsonify(hvac), 200
     
     except Exception as e:
-        app.logger.error(f"Error: {e}")      
-        return "Error", 500
+        app.logger.error(f"HVAC server error getting data: {e}")      
+        return jsonify({"error": str(e)}), 503
 
 
 # @hvac_api.route('/thermostat_status_get', methods=['GET'])
@@ -121,12 +127,28 @@ def shelly_thermostat_status():
             src_id=shelly_src_id
         )
         status = shelly.get_status()
+        
+        # Check if status is None or if all values are None (device unreachable)
         if status is None:
-            status = {"current_temp": None, "set_temp": None, "current_humidity": None, "enabled": None}
+            app.logger.warning(f"Shelly thermostat ({shelly_ip}) returned None - device may be unreachable")
+            return jsonify({"error": "Shelly thermostat unreachable", "current_temp": None, "set_temp": None, "current_humidity": None, "enabled": None}), 503
+        
+        # Check if all status values are None (device unreachable but get_status returned dict with None values)
+        if isinstance(status, dict):
+            all_none = (
+                status.get("current_temp") is None and 
+                status.get("set_temp") is None and 
+                status.get("current_humidity") is None and 
+                status.get("enabled") is None
+            )
+            if all_none:
+                app.logger.warning(f"Shelly thermostat ({shelly_ip}) returned all None values - device may be unreachable")
+                return jsonify({"error": "Shelly thermostat unreachable", **status}), 503
+        
         return jsonify(status), 200
     except Exception as e:
-        app.logger.error(f"Error getting Shelly thermostat status: {e}")
-        return jsonify({"current_temp": None, "set_temp": None, "current_humidity": None, "enabled": None, "error": str(e)}), 200
+        app.logger.error(f"Shelly thermostat error getting status: {e}")
+        return jsonify({"error": str(e), "current_temp": None, "set_temp": None, "current_humidity": None, "enabled": None}), 503
 
 
 @hvac_api.route('/shelly_thermostat_set_temp', methods=['POST'])
@@ -145,10 +167,12 @@ def shelly_thermostat_set_temp():
         if success:
             return jsonify({"status": "success"}), 200
         else:
-            return "Error", 500
+            # Device unreachable or request failed
+            app.logger.warning(f"Shelly thermostat ({shelly_ip}) set_temperature failed - device may be unreachable")
+            return jsonify({"error": "Shelly thermostat unreachable", "status": "error"}), 503
     except Exception as e:
-        app.logger.error(f"Error: {e}")
-        return "Error", 500
+        app.logger.error(f"Shelly thermostat error setting temperature: {e}")
+        return jsonify({"error": str(e), "status": "error"}), 503
 
 
 @hvac_api.route('/shelly_thermostat_enable', methods=['POST'])
@@ -167,10 +191,12 @@ def shelly_thermostat_enable():
         if success:
             return jsonify({"status": "success", "enabled": enabled}), 200
         else:
-            return "Error", 500
+            # Device unreachable or request failed
+            app.logger.warning(f"Shelly thermostat ({shelly_ip}) set_enabled failed - device may be unreachable")
+            return jsonify({"error": "Shelly thermostat unreachable", "status": "error", "enabled": None}), 503
     except Exception as e:
-        app.logger.error(f"Error: {e}")
-        return "Error", 500
+        app.logger.error(f"Shelly thermostat error enabling/disabling: {e}")
+        return jsonify({"error": str(e), "status": "error", "enabled": None}), 503
 
     
 @hvac_api.route('/hvac_data_get', methods=['POST'])
@@ -199,11 +225,11 @@ def hvac_data_set_vet_r_tmp():
         if int(server_http_code) in [200, 201]:
             return "", 200
         else:
-            raise ValueError(f"Server error. stauts code: {server_http_code}.")        
+            raise ValueError(f"HVAC server error. Status code: {server_http_code}.")        
             
     
     except Exception as e:
-        app.logger.error(f"Error: {e}")      
+        app.logger.error(f"HVAC server error setting temperature/ventilation: {e}")      
         return "Error", 500
 
 
