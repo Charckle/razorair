@@ -294,6 +294,8 @@ def settings_edit():
         shelly_src_id = app_config.get("shelly_src_id", str(uuid.uuid4()))
         shelly_thermostat_ip = app_config.get("shelly_thermostat_ip", "192.168.0.123")
         systemair_hvac_ip = app_config.get("systemair_hvac_ip", "192.168.0.111")
+        proxy_server_ip = app_config.get("proxy_server_ip", "http://proxy-server:5000")
+        hvac_data_source = app_config.get("hvac_data_source", "systemair")
     except Exception as e:
         app.logger.warn(f"{e}")
         error_msg = "Napaka pri nalaganju nastavitev."
@@ -308,7 +310,9 @@ def settings_edit():
                     low_temp_threshold=str(low_temp),
                     shelly_src_id=shelly_src_id,
                     shelly_thermostat_ip=shelly_thermostat_ip,
-                    systemair_hvac_ip=systemair_hvac_ip)
+                    systemair_hvac_ip=systemair_hvac_ip,
+                    proxy_server_ip=proxy_server_ip,
+                    hvac_data_source=hvac_data_source)
     
     # POST - save changes
     if form.validate_on_submit():
@@ -320,6 +324,8 @@ def settings_edit():
             app_config["shelly_src_id"] = form.shelly_src_id.data
             app_config["shelly_thermostat_ip"] = form.shelly_thermostat_ip.data.strip()
             app_config["systemair_hvac_ip"] = form.systemair_hvac_ip.data.strip()
+            app_config["proxy_server_ip"] = form.proxy_server_ip.data.strip() if form.proxy_server_ip.data else "http://proxy-server:5000"
+            app_config["hvac_data_source"] = form.hvac_data_source.data
         except ValueError:
             flash('Invalid numeric values.', 'error')
             return redirect(url_for("main_page_module.settings_edit"))

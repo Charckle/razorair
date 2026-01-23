@@ -75,6 +75,24 @@
             </div>
           </div>
           
+          <hr>
+          
+          <h5>HVAC Data Source Settings</h5>
+          <p class="text-muted">Configure which source to use for HVAC data.</p>
+          
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label for="hvac_data_source" class="form-label">HVAC Data Source</label>
+              {{ form.hvac_data_source(class="form-control") }}
+              <small class="form-text text-muted">Select the source for HVAC data: Systemair WiFi Module or Proxy Server.</small>
+            </div>
+            <div class="col-md-6">
+              <label for="proxy_server_ip" class="form-label">Proxy Server URL</label>
+              {{ form.proxy_server_ip(class="form-control") }}
+              <small class="form-text text-muted">URL of the proxy server (e.g., http://proxy-server:5000). Required when using Proxy Server as data source.</small>
+            </div>
+          </div>
+          
           <div class="form-group">
             {{ form.submit(class="btn btn-primary mb-3") }}
             </div>

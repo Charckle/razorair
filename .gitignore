@@ -1,14 +1,27 @@
-__pycache__/
-*.pyc
-*.exe
-database.db
-to-do.txt
-.vs
-.index/
-logs/
-*.log
-.env
+# Sensitive configuration
+data/config.json
+data/cities.json
+data/calendar/*.json
 
-app/files_u/*
-# exception to the rule
-!app/files_u/.gitkeep 
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# User-specific data
+data/
+!data/.gitkeep  # Keep directory structure
+
+# Logs
+*.log
+logs/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/

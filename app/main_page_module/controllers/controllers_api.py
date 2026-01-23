@@ -15,6 +15,7 @@ from app.main_page_module.other import Randoms
 from app.main_page_module.gears import Gears_obj
 from app.main_page_module.p_objects.open_meteo_o import Open_W_obj
 from app.main_page_module.p_objects.systemair_server_connect import Sasc
+from app.main_page_module.p_objects.proxy_server_connect import ProxyServer
 from app.main_page_module.p_objects.thermostat import Thermo
 from app.main_page_module.p_objects.shelly_thermostat import ShellyThermostat
 
@@ -49,14 +50,26 @@ def hvac_data_get():
     
     try:
         app_config = Gears_obj.load_app_config()
-        systemair_ip = app_config.get("systemair_hvac_ip", app.config.get('SYSTEMAIR_SERVER', '192.168.0.111'))
-        hvac_obj = Sasc(systemair_ip)
+        hvac_data_source = app_config.get("hvac_data_source", "systemair")
+        
+        # Use proxy server if configured, otherwise use systemair
+        if hvac_data_source == "proxy":
+            proxy_url = app_config.get("proxy_server_ip", "http://proxy-server:5000")
+            hvac_obj = ProxyServer(proxy_url)
+            source_name = f"proxy server ({proxy_url})"
+            app.logger.debug(f"Using proxy server: {proxy_url}")
+        else:
+            systemair_ip = app_config.get("systemair_hvac_ip", app.config.get('SYSTEMAIR_SERVER', '192.168.0.111'))
+            hvac_obj = Sasc(systemair_ip)
+            source_name = f"HVAC server ({systemair_ip})"
+            app.logger.debug(f"Using Systemair WiFi module: {systemair_ip}")
+        
         hvac_data = hvac_obj.hvac_data()
         
         # Check if HVAC data is empty (device unreachable)
         # Empty dict means connection failed - all exceptions were caught and t_data stayed None
         if hvac_data == {}:
-            app.logger.warning(f"HVAC server ({systemair_ip}) returned empty data - device may be unreachable")
+            app.logger.warning(f"{source_name} returned empty data - device may be unreachable")
             return jsonify({"error": "HVAC device unreachable", "data": {}}), 503
         
         req_temperature = 24
@@ -217,8 +230,18 @@ def hvac_data_set_vet_r_tmp():
         
         
         app_config = Gears_obj.load_app_config()
-        systemair_ip = app_config.get("systemair_hvac_ip", app.config.get('SYSTEMAIR_SERVER', '192.168.0.111'))
-        hvac_obj = Sasc(systemair_ip)
+        hvac_data_source = app_config.get("hvac_data_source", "systemair")
+        
+        # Use proxy server if configured, otherwise use systemair
+        if hvac_data_source == "proxy":
+            proxy_url = app_config.get("proxy_server_ip", "http://proxy-server:5000")
+            hvac_obj = ProxyServer(proxy_url)
+            app.logger.debug(f"Using proxy server for setting: {proxy_url}")
+        else:
+            systemair_ip = app_config.get("systemair_hvac_ip", app.config.get('SYSTEMAIR_SERVER', '192.168.0.111'))
+            hvac_obj = Sasc(systemair_ip)
+            app.logger.debug(f"Using Systemair WiFi module for setting: {systemair_ip}")
+        
         user_set_temp = user_set_temp * 10
         server_http_code = hvac_obj.set_hvac_temp_vent(user_set_ventilation, user_set_temp)
             

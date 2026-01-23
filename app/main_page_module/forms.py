@@ -102,6 +102,13 @@ class Configuration(FlaskForm):
     shelly_src_id = StringField('Shelly Source ID', [validators.InputRequired()])
     shelly_thermostat_ip = StringField('Shelly Thermostat IP', [validators.InputRequired()])
     systemair_hvac_ip = StringField('Systemair HVAC IP', [validators.InputRequired()])
+    proxy_server_ip = StringField('Proxy Server URL', [validators.Optional()])
+    hvac_data_source = SelectField('HVAC Data Source', 
+                       choices=[
+                           ('systemair', 'Systemair WiFi Module'),
+                           ('proxy', 'Proxy Server')
+                       ],
+                       default='systemair')
     
     submit = SubmitField('Save Changes')
 
