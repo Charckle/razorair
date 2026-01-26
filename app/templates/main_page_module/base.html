@@ -14,6 +14,8 @@
     <!-- Bootstrap icons -->
     <link rel="stylesheet" href="{{ url_for('static', filename='main_page_module/icons/bootstrap_icons/bootstrap-icons.min.css') }}">
     
+    <!-- Custom Colors CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='main_page_module/custom-colors.css') }}">
 
     {% block extraheader %}
     {% endblock extraheader %}
@@ -30,30 +32,48 @@
   </svg>
     
   <body>
-    <header class="p-3 text-bg-dark">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
       <div class="container">
-        <div class="d-flex flex-wrap align-items-center justify-content-center justify-content-lg-start">
-          <a href="/" class="d-flex align-items-center mb-2 mb-lg-0 text-white text-decoration-none">
-            <svg class="bi me-2" width="40" height="32" role="img" aria-label="Bootstrap" style="fill: rgb(235, 235, 235); "><use xlink:href="#bootstrap"></use></svg>
-          </a>
-  
-          <ul class="nav col-12 col-lg-auto me-lg-auto mb-2 justify-content-center mb-md-0">
-            <li><a href="{{ url_for('main_page_module.index') }}" class="nav-link px-2 {% block nav_index %}text-white{% endblock nav_index %}"><i class="bi bi-house"></i> Home</a></li>
-            <li><a href="{{ url_for('main_page_module.hvac') }}" class="nav-link px-2 {% block nav_hvac %}text-white{% endblock nav_hvac %}"><i class="bi bi-house"></i> HVAC</a></li>
-            <li><a href="{{ url_for('main_page_module.radar') }}" class="nav-link px-2 {% block nav_radar %}text-white{% endblock nav_radar %}"><i class="bi bi-radar"></i> Radar</a></li>
-            <li><a href="{{ url_for('main_page_module.calendar') }}" class="nav-link px-2 {% block nav_calendar %}text-white{% endblock nav_calendar %}"><i class="bi bi-calendar3"></i> Calendar</a></li>
-
-            <li><a href="{{ url_for('main_page_module.settings_edit') }}" class="nav-link px-2 {% block nav_sett %}text-white{% endblock nav_sett %}">Nastavitve</a></li>
-            
+        <a class="navbar-brand d-flex align-items-center" href="/">
+          <svg class="bi me-2" width="40" height="32" role="img" aria-label="Bootstrap" style="fill: rgb(235, 235, 235); "><use xlink:href="#bootstrap"></use></svg>
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+            <li class="nav-item">
+              <a class="nav-link {% block nav_index %}{% endblock nav_index %}" href="{{ url_for('main_page_module.index') }}">
+                <i class="bi bi-house"></i> Home
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link {% block nav_hvac %}{% endblock nav_hvac %}" href="{{ url_for('main_page_module.hvac') }}">
+                <i class="bi bi-house"></i> HVAC
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link {% block nav_radar %}{% endblock nav_radar %}" href="{{ url_for('main_page_module.radar') }}">
+                <i class="bi bi-radar"></i> Radar
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link {% block nav_calendar %}{% endblock nav_calendar %}" href="{{ url_for('main_page_module.calendar') }}">
+                <i class="bi bi-calendar3"></i> Calendar
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link {% block nav_sett %}{% endblock nav_sett %}" href="{{ url_for('main_page_module.settings_edit') }}">
+                Nastavitve
+              </a>
+            </li>
           </ul>
-          
-          <div class="text-end d-flex align-items-center">
-            <!-- Login Button -->
-            <a type="button" class="btn btn-outline-light me-2" href="{{ url_for('main_page_module.logout') }}">Logout</a>
-        </div>
+          <div class="d-flex">
+            <a class="btn btn-outline-light" href="{{ url_for('main_page_module.logout') }}">Logout</a>
+          </div>
         </div>
       </div>
-    </header>
+    </nav>
 
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}

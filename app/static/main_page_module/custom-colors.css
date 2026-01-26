@@ -1,0 +1,308 @@
+/*!
+ * Custom Color Palette Extension for Bootstrap
+ * Adds 6 additional colors to Bootstrap's color system
+ */
+
+:root,
+[data-bs-theme=light] {
+  /* Custom Color Definitions */
+  --bs-brown: #8b4513;
+  --bs-brown-rgb: 139, 69, 19;
+  --bs-brown-text-emphasis: #4a2509;
+  --bs-brown-bg-subtle: #f5e6d3;
+  --bs-brown-border-subtle: #d4a574;
+
+  --bs-lime: #84cc16;
+  --bs-lime-rgb: 132, 204, 22;
+  --bs-lime-text-emphasis: #3d5f0a;
+  --bs-lime-bg-subtle: #f0f9d8;
+  --bs-lime-border-subtle: #c2e66b;
+
+  --bs-amber: #f59e0b;
+  --bs-amber-rgb: 245, 158, 11;
+  --bs-amber-text-emphasis: #7a4f05;
+  --bs-amber-bg-subtle: #fef3c7;
+  --bs-amber-border-subtle: #fcd34d;
+
+  --bs-rose: #e11d48;
+  --bs-rose-rgb: 225, 29, 72;
+  --bs-rose-text-emphasis: #720e24;
+  --bs-rose-bg-subtle: #fce7e7;
+  --bs-rose-border-subtle: #f9a8b4;
+
+  --bs-violet: #7c3aed;
+  --bs-violet-rgb: 124, 58, 237;
+  --bs-violet-text-emphasis: #3e1d76;
+  --bs-violet-bg-subtle: #ede9fe;
+  --bs-violet-border-subtle: #c4b5fd;
+
+  --bs-emerald: #10b981;
+  --bs-emerald-rgb: 16, 185, 129;
+  --bs-emerald-text-emphasis: #065f40;
+  --bs-emerald-bg-subtle: #d1fae5;
+  --bs-emerald-border-subtle: #6ee7b7;
+
+  --bs-pink: #ec4899;
+  --bs-pink-rgb: 236, 72, 153;
+  --bs-pink-text-emphasis: #831843;
+  --bs-pink-bg-subtle: #fce7f3;
+  --bs-pink-border-subtle: #f9a8d4;
+}
+
+[data-bs-theme=dark] {
+  --bs-brown-text-emphasis: #d4a574;
+  --bs-brown-bg-subtle: #4a2509;
+  --bs-brown-border-subtle: #6b3a0f;
+
+  --bs-lime-text-emphasis: #c2e66b;
+  --bs-lime-bg-subtle: #3d5f0a;
+  --bs-lime-border-subtle: #5a8a0f;
+
+  --bs-amber-text-emphasis: #fcd34d;
+  --bs-amber-bg-subtle: #7a4f05;
+  --bs-amber-border-subtle: #b8760e;
+
+  --bs-rose-text-emphasis: #f9a8b4;
+  --bs-rose-bg-subtle: #720e24;
+  --bs-rose-border-subtle: #b91c3a;
+
+  --bs-violet-text-emphasis: #c4b5fd;
+  --bs-violet-bg-subtle: #3e1d76;
+  --bs-violet-border-subtle: #5b21b6;
+
+  --bs-emerald-text-emphasis: #6ee7b7;
+  --bs-emerald-bg-subtle: #065f40;
+  --bs-emerald-border-subtle: #059669;
+
+  --bs-pink-text-emphasis: #f9a8d4;
+  --bs-pink-bg-subtle: #831843;
+  --bs-pink-border-subtle: #be185d;
+}
+
+/* Border Color Utilities */
+.border-brown {
+  --bs-border-opacity: 1;
+  border-color: rgba(var(--bs-brown-rgb), var(--bs-border-opacity)) !important;
+}
+
+.border-lime {
+  --bs-border-opacity: 1;
+  border-color: rgba(var(--bs-lime-rgb), var(--bs-border-opacity)) !important;
+}
+
+.border-amber {
+  --bs-border-opacity: 1;
+  border-color: rgba(var(--bs-amber-rgb), var(--bs-border-opacity)) !important;
+}
+
+.border-rose {
+  --bs-border-opacity: 1;
+  border-color: rgba(var(--bs-rose-rgb), var(--bs-border-opacity)) !important;
+}
+
+.border-violet {
+  --bs-border-opacity: 1;
+  border-color: rgba(var(--bs-violet-rgb), var(--bs-border-opacity)) !important;
+}
+
+.border-emerald {
+  --bs-border-opacity: 1;
+  border-color: rgba(var(--bs-emerald-rgb), var(--bs-border-opacity)) !important;
+}
+
+.border-pink {
+  --bs-border-opacity: 1;
+  border-color: rgba(var(--bs-pink-rgb), var(--bs-border-opacity)) !important;
+}
+
+.border-brown-subtle {
+  border-color: var(--bs-brown-border-subtle) !important;
+}
+
+.border-lime-subtle {
+  border-color: var(--bs-lime-border-subtle) !important;
+}
+
+.border-amber-subtle {
+  border-color: var(--bs-amber-border-subtle) !important;
+}
+
+.border-rose-subtle {
+  border-color: var(--bs-rose-border-subtle) !important;
+}
+
+.border-violet-subtle {
+  border-color: var(--bs-violet-border-subtle) !important;
+}
+
+.border-emerald-subtle {
+  border-color: var(--bs-emerald-border-subtle) !important;
+}
+
+.border-pink-subtle {
+  border-color: var(--bs-pink-border-subtle) !important;
+}
+
+/* Text Color Utilities */
+.text-brown {
+  --bs-text-opacity: 1;
+  color: rgba(var(--bs-brown-rgb), var(--bs-text-opacity)) !important;
+}
+
+.text-lime {
+  --bs-text-opacity: 1;
+  color: rgba(var(--bs-lime-rgb), var(--bs-text-opacity)) !important;
+}
+
+.text-amber {
+  --bs-text-opacity: 1;
+  color: rgba(var(--bs-amber-rgb), var(--bs-text-opacity)) !important;
+}
+
+.text-rose {
+  --bs-text-opacity: 1;
+  color: rgba(var(--bs-rose-rgb), var(--bs-text-opacity)) !important;
+}
+
+.text-violet {
+  --bs-text-opacity: 1;
+  color: rgba(var(--bs-violet-rgb), var(--bs-text-opacity)) !important;
+}
+
+.text-emerald {
+  --bs-text-opacity: 1;
+  color: rgba(var(--bs-emerald-rgb), var(--bs-text-opacity)) !important;
+}
+
+.text-pink {
+  --bs-text-opacity: 1;
+  color: rgba(var(--bs-pink-rgb), var(--bs-text-opacity)) !important;
+}
+
+.text-brown-emphasis {
+  color: var(--bs-brown-text-emphasis) !important;
+}
+
+.text-lime-emphasis {
+  color: var(--bs-lime-text-emphasis) !important;
+}
+
+.text-amber-emphasis {
+  color: var(--bs-amber-text-emphasis) !important;
+}
+
+.text-rose-emphasis {
+  color: var(--bs-rose-text-emphasis) !important;
+}
+
+.text-violet-emphasis {
+  color: var(--bs-violet-text-emphasis) !important;
+}
+
+.text-emerald-emphasis {
+  color: var(--bs-emerald-text-emphasis) !important;
+}
+
+.text-pink-emphasis {
+  color: var(--bs-pink-text-emphasis) !important;
+}
+
+/* Background Color Utilities */
+.bg-brown {
+  --bs-bg-opacity: 1;
+  background-color: rgba(var(--bs-brown-rgb), var(--bs-bg-opacity)) !important;
+}
+
+.bg-lime {
+  --bs-bg-opacity: 1;
+  background-color: rgba(var(--bs-lime-rgb), var(--bs-bg-opacity)) !important;
+}
+
+.bg-amber {
+  --bs-bg-opacity: 1;
+  background-color: rgba(var(--bs-amber-rgb), var(--bs-bg-opacity)) !important;
+}
+
+.bg-rose {
+  --bs-bg-opacity: 1;
+  background-color: rgba(var(--bs-rose-rgb), var(--bs-bg-opacity)) !important;
+}
+
+.bg-violet {
+  --bs-bg-opacity: 1;
+  background-color: rgba(var(--bs-violet-rgb), var(--bs-bg-opacity)) !important;
+}
+
+.bg-emerald {
+  --bs-bg-opacity: 1;
+  background-color: rgba(var(--bs-emerald-rgb), var(--bs-bg-opacity)) !important;
+}
+
+.bg-pink {
+  --bs-bg-opacity: 1;
+  background-color: rgba(var(--bs-pink-rgb), var(--bs-bg-opacity)) !important;
+}
+
+.bg-brown-subtle {
+  background-color: var(--bs-brown-bg-subtle) !important;
+}
+
+.bg-lime-subtle {
+  background-color: var(--bs-lime-bg-subtle) !important;
+}
+
+.bg-amber-subtle {
+  background-color: var(--bs-amber-bg-subtle) !important;
+}
+
+.bg-rose-subtle {
+  background-color: var(--bs-rose-bg-subtle) !important;
+}
+
+.bg-violet-subtle {
+  background-color: var(--bs-violet-bg-subtle) !important;
+}
+
+.bg-emerald-subtle {
+  background-color: var(--bs-emerald-bg-subtle) !important;
+}
+
+.bg-pink-subtle {
+  background-color: var(--bs-pink-bg-subtle) !important;
+}
+
+/* Text with Background Utilities */
+.text-bg-brown {
+  color: #fff !important;
+  background-color: RGBA(var(--bs-brown-rgb), var(--bs-bg-opacity, 1)) !important;
+}
+
+.text-bg-lime {
+  color: #000 !important;
+  background-color: RGBA(var(--bs-lime-rgb), var(--bs-bg-opacity, 1)) !important;
+}
+
+.text-bg-amber {
+  color: #000 !important;
+  background-color: RGBA(var(--bs-amber-rgb), var(--bs-bg-opacity, 1)) !important;
+}
+
+.text-bg-rose {
+  color: #fff !important;
+  background-color: RGBA(var(--bs-rose-rgb), var(--bs-bg-opacity, 1)) !important;
+}
+
+.text-bg-violet {
+  color: #fff !important;
+  background-color: RGBA(var(--bs-violet-rgb), var(--bs-bg-opacity, 1)) !important;
+}
+
+.text-bg-emerald {
+  color: #fff !important;
+  background-color: RGBA(var(--bs-emerald-rgb), var(--bs-bg-opacity, 1)) !important;
+}
+
+.text-bg-pink {
+  color: #fff !important;
+  background-color: RGBA(var(--bs-pink-rgb), var(--bs-bg-opacity, 1)) !important;
+}

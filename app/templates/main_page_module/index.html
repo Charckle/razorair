@@ -1,9 +1,34 @@
 {% extends "main_page_module/base.html" %}
 
 {% block extraheader %}
+<style>
+  /* Prevent overflow in Opozorila section on mobile */
+  #warnings_container .list-group-item {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    white-space: normal;
+    overflow-x: hidden;
+    max-width: 100%;
+  }
+  
+  #warnings_container .list-group-item * {
+    max-width: 100%;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
+  
+  /* Ensure badges don't cause overflow */
+  #warnings_container .badge {
+    white-space: nowrap;
+    display: inline-block;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+</style>
 {% endblock extraheader  %}
 
-{% block nav_index %}text-secondary{% endblock nav_index %}
+{% block nav_index %}active{% endblock nav_index %}
 
 
 
@@ -36,7 +61,8 @@
   <div class="container-fluid" >
     <br>
     <div class="row">
-      <div class="col-sm-3">
+      <!-- First Column: Status Table and Temperature Readings -->
+      <div class="col-sm-4" style="overflow-x: hidden; max-width: 100%;">
         <table class="table">
           <tbody>
             <tr>
@@ -58,41 +84,69 @@
           </tbody>
         </table>
 
-        <table class="table">
-          <tbody>
-            
-            <tr>
-              <th rowspan="2" class="text-center align-middle"><img id="home_icon" style="height: 80px;" src="{{ url_for('static', filename='main_page_module/icons/weather/fill/not-available.svg') }}" alt=""></th>
-              <th scope="col"><i class="bi bi-house-fill"></i> Notranja temperatura</th>
-              <th scope="col"><i class="bi bi-house-fill"></i> <i class="bi bi-droplet"></i> Vlažnost</th>
-              <th scope="col"><i class="bi bi-cloud"></i> Zunanja temperatura</th>
-            </tr>
-            <tr>
-              <td><span id="inhouse_t"></span>°C</td>
-              <td><span id="inhouse_humidity"></span>%</td>
-              <td><span id="outside_t"></span>°C</td>
-            </tr>
-
-          </tbody>
-        </table>
-
-
+        <!-- Temperature Readings Row - Cards that wrap on small screens -->
+        <div class="row g-2 mt-2">
+          <div class="col-12 col-sm-6 col-md-3">
+            <div class="card">
+              <div class="card-body text-center">
+                <img id="home_icon" style="max-height: 80px; max-width: 100%; width: auto; height: auto;" src="{{ url_for('static', filename='main_page_module/icons/weather/fill/not-available.svg') }}" alt="">
+              </div>
+            </div>
+          </div>
+          <div class="col-12 col-sm-6 col-md-3">
+            <div class="card">
+              <div class="card-body">
+                <div class="d-flex align-items-center">
+                  <i class="bi bi-house-fill me-2"></i>
+                  <div>
+                    <small class="text-muted d-block">Notranja temperatura</small>
+                    <strong><span id="inhouse_t"></span>°C</strong>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-12 col-sm-6 col-md-3">
+            <div class="card">
+              <div class="card-body">
+                <div class="d-flex align-items-center">
+                  <i class="bi bi-droplet me-2"></i>
+                  <div>
+                    <small class="text-muted d-block">Vlažnost</small>
+                    <strong><span id="inhouse_humidity"></span>%</strong>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-12 col-sm-6 col-md-3">
+            <div class="card">
+              <div class="card-body">
+                <div class="d-flex align-items-center">
+                  <i class="bi bi-cloud me-2"></i>
+                  <div>
+                    <small class="text-muted d-block">Zunanja temperatura</small>
+                    <strong><span id="outside_t"></span>°C</strong>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
       
-      
-      <div class="col-sm-6">
+      <!-- Second Column: Opozorila -->
+      <div class="col-sm-4" style="overflow-x: hidden; word-wrap: break-word;">
         <legend>Opozorila</legend>
         <hr>
 
-        <div id="warnings_container" class="list-group" style="overflow-y: auto; overflow-x: hidden; max-height: 300px;">
+        <div id="warnings_container" class="list-group" style="overflow-y: auto; overflow-x: hidden; max-height: 300px; word-wrap: break-word;">
           <!-- Warnings will be dynamically inserted here -->
         </div>
-        
       </div>
 
-
-        
-      <div class="col-sm-3">
+      <!-- Third Column: Controls -->
+      <div class="col-sm-4">
         <h5>Željena temperatura</h5>
 
         <div class="input-group">
@@ -453,6 +507,9 @@
         var warningItem = document.createElement("a");
         warningItem.href = "#";
         warningItem.className = "list-group-item list-group-item-action list-group-item-warning";
+        warningItem.style.wordWrap = "break-word";
+        warningItem.style.overflowWrap = "break-word";
+        warningItem.style.whiteSpace = "normal";
         
         var icon = document.createElement("i");
         if (warning.type === "high") {
@@ -538,6 +595,10 @@
         eventItem.href = "/calendar/event/" + eventId;
         eventItem.className = "list-group-item list-group-item-action border-" + event.color;
         eventItem.style.borderLeftWidth = "4px";
+        eventItem.style.wordWrap = "break-word";
+        eventItem.style.overflowWrap = "break-word";
+        eventItem.style.whiteSpace = "normal";
+        eventItem.style.overflowX = "hidden";
         
         // Make today's events more prominent
         if (isToday) {
@@ -594,11 +655,16 @@
         if (isToday) {
           eventText.style.fontWeight = "bold";
         }
+        eventText.style.wordWrap = "break-word";
+        eventText.style.overflowWrap = "break-word";
         eventText.textContent = " " + event.title;
         eventItem.appendChild(eventText);
         
         var dateSpan = document.createElement("span");
         dateSpan.className = "text-muted ms-2";
+        dateSpan.style.wordWrap = "break-word";
+        dateSpan.style.overflowWrap = "break-word";
+        dateSpan.style.whiteSpace = "normal";
         // Show the date for this specific day
         var dateText = eventDate.toLocaleDateString();
         // Show time only on first day (or if it's a single day event)
