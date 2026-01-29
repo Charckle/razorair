@@ -437,6 +437,77 @@ def settings_city_delete(city_index):
     return redirect(url_for("main_page_module.settings_edit"))
 
 
+# Stikala (Shelly plugs) - list, add, edit, delete
+@main_page_module.route('/stikala', methods=['GET'])
+@login_required
+def stikala():
+    plugs = Gears_obj.load_shelly_plugs()
+    return render_template("main_page_module/stikala/stikala.html", plugs=plugs)
+
+
+@main_page_module.route('/stikala/new', methods=['GET', 'POST'])
+@login_required
+def stikala_new():
+    form = form_dicts["Plug"]()
+    if form.validate_on_submit():
+        try:
+            plugs = Gears_obj.load_shelly_plugs()
+            plugs.append({
+                "name": form.plug_name.data.strip(),
+                "ip": form.plug_ip.data.strip(),
+            })
+            Gears_obj.save_shelly_plugs(plugs)
+            flash("Stikalo dodano.", 'success')
+            return redirect(url_for("main_page_module.stikala"))
+        except Exception as e:
+            app.logger.error(f"Error adding plug: {e}")
+            flash('Napaka pri dodajanju.', 'error')
+    return render_template("main_page_module/stikala/stikala_edit.html", form=form)
+
+
+@main_page_module.route('/stikala/edit/<int:plug_index>', methods=['GET', 'POST'])
+@login_required
+def stikala_edit(plug_index):
+    form = form_dicts["Plug"]()
+    try:
+        plugs = Gears_obj.load_shelly_plugs()
+        if plug_index >= len(plugs):
+            flash("Stikalo ni najdeno.", 'error')
+            return redirect(url_for("main_page_module.stikala"))
+        plug = plugs[plug_index]
+        if request.method == 'GET':
+            form.process(plug_name=plug["name"], plug_ip=plug["ip"])
+        if form.validate_on_submit():
+            plugs[plug_index] = {
+                "name": form.plug_name.data.strip(),
+                "ip": form.plug_ip.data.strip(),
+            }
+            Gears_obj.save_shelly_plugs(plugs)
+            flash("Stikalo posodobljeno.", 'success')
+            return redirect(url_for("main_page_module.stikala"))
+    except Exception as e:
+        app.logger.error(f"Error editing plug: {e}")
+        flash('Napaka pri posodabljanju.', 'error')
+        return redirect(url_for("main_page_module.stikala"))
+    return render_template("main_page_module/stikala/stikala_edit.html", form=form, plug_index=plug_index)
+
+
+@main_page_module.route('/stikala/delete/<int:plug_index>', methods=['GET'])
+@login_required
+def stikala_delete(plug_index):
+    try:
+        plugs = Gears_obj.load_shelly_plugs()
+        if plug_index >= len(plugs):
+            flash("Stikalo ni najdeno.", 'error')
+        else:
+            plugs.pop(plug_index)
+            Gears_obj.save_shelly_plugs(plugs)
+            flash("Stikalo izbrisano.", 'success')
+    except Exception as e:
+        app.logger.error(f"Error deleting plug: {e}")
+        flash('Napaka pri brisanju.', 'error')
+    return redirect(url_for("main_page_module.stikala"))
+
 
 # Set the route and accepted methods
 @main_page_module.route('/login/', methods=['GET', 'POST'])

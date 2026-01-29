@@ -297,6 +297,24 @@ class Gears_obj:
         return instances
     
     @staticmethod
+    def load_shelly_plugs():
+        """Load Shelly plugs list (name, ip) from data/shelly_plugs.json"""
+        location = "data"
+        filename = "shelly_plugs.json"
+        try:
+            return Pylavor.json_read(location, filename)
+        except FileNotFoundError:
+            return []
+
+    @staticmethod
+    def save_shelly_plugs(plugs):
+        """Save Shelly plugs list to data/shelly_plugs.json"""
+        location = "data"
+        filename = "shelly_plugs.json"
+        Pylavor.create_folder(location)
+        Pylavor.json_write(location, filename, plugs)
+
+    @staticmethod
     def get_calendar_events_for_date_range(start_date, end_date):
         """Get all calendar events within a date range (inclusive), including recurring instances"""
         all_events = []

@@ -1,0 +1,65 @@
+{% extends "main_page_module/base.html" %}
+
+{% block extraheader %}
+{% endblock extraheader  %}
+
+{% block nav_sett %}active{% endblock nav_sett %}
+{% block nav_stikala %}active{% endblock nav_stikala %}
+
+{% block content%}
+
+  <div class="container-fluid">
+    <br>
+    <div class="row">
+      <div class="col-sm-1"></div>
+      <div class="col-sm-10">
+        
+        <h4>Stikala (Shelly vtičnice)</h4>
+        <hr>
+        <p class="text-muted">Seznam Shelly vtičnic. Dodajte IP in ime za vsako vtičnico.</p>
+        
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h5>Vtičnice</h5>
+          <a href="{{ url_for('main_page_module.stikala_new') }}" class="btn btn-success">
+            <i class="bi bi-plus-circle"></i> Dodaj
+          </a>
+        </div>
+        
+        <div class="table-responsive">
+          <table class="table table-striped">
+            <thead>
+              <tr>
+                <th>Ime</th>
+                <th>IP</th>
+                <th>Dejanja</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for plug in plugs %}
+              <tr>
+                <td><strong>{{ plug.name }}</strong></td>
+                <td>{{ plug.ip }}</td>
+                <td>
+                  <a href="{{ url_for('main_page_module.stikala_edit', plug_index=loop.index0) }}" class="btn btn-sm btn-outline-primary">
+                    <i class="bi bi-pencil"></i> Uredi
+                  </a>
+                  <a href="{{ url_for('main_page_module.stikala_delete', plug_index=loop.index0) }}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Izbrišem to vtičnico?');">
+                    <i class="bi bi-trash"></i> Izbriši
+                  </a>
+                </td>
+              </tr>
+              {% else %}
+              <tr>
+                <td colspan="3" class="text-muted text-center">Ni vtičnic. Kliknite Dodaj.</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+      <div class="col-sm-1"></div>
+    </div>
+  </div>
+
+{% endblock content %}

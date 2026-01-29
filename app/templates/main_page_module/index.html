@@ -2,6 +2,25 @@
 
 {% block extraheader %}
 <style>
+  /* Stikala offcanvas: narrow on desktop, full width on small screens */
+  #lightsOffcanvas { width: 300px; max-width: 95vw; }
+  @media (max-width: 576px) {
+    #lightsOffcanvas { width: 95vw; }
+  }
+  /* Floating button on the right, moves with viewport */
+  .stikala-toggle-btn {
+    position: fixed;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 1055;
+    border-radius: 0.375rem 0 0 0.375rem;
+    box-shadow: -2px 0 8px rgba(0,0,0,0.15);
+    padding: 1rem 1.25rem;
+    font-size: 1.25rem;
+    transition: right 0.3s ease;
+  }
+  .stikala-toggle-btn .bi { font-size: 1.5rem; }
   /* Prevent overflow in Opozorila section on mobile */
   #warnings_container .list-group-item {
     word-wrap: break-word;
@@ -24,6 +43,62 @@
     max-width: 100%;
     overflow: hidden;
     text-overflow: ellipsis;
+  }
+  /* Weather cities: horizontal scroll for daily cards on small screens */
+  #cities_weather_container .cities-daily-scroll {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    width: 100%;
+    max-width: 100%;
+    min-height: 0;
+    gap: 0.5rem;
+    padding-bottom: 0.5rem;
+  }
+  /* Match hourly weather card size: 80px min (same as current weather strip) */
+  #cities_weather_container .cities-daily-scroll .city-day-col {
+    flex: 0 0 auto;
+    min-width: 80px;
+    width: 80px;
+  }
+  #cities_weather_container .cities-daily-scroll .city-day-col .card {
+    overflow: hidden;
+    min-width: 0;
+  }
+  #cities_weather_container .cities-daily-scroll .city-day-col .card-body {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding: 0.5rem;
+  }
+  /* Icons same min size as hourly (current weather): 45px */
+  #cities_weather_container .cities-daily-scroll .city-day-col .card-body img {
+    min-height: 45px;
+    max-height: 45px;
+    width: auto;
+    object-fit: contain;
+  }
+  #cities_weather_container .cities-daily-scroll .city-day-col .card-text:first-of-type {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 0.75rem;
+  }
+  @media (min-width: 576px) {
+    #cities_weather_container .cities-daily-scroll {
+      flex-wrap: wrap;
+      overflow-x: visible;
+      gap: 0;
+      padding-bottom: 0;
+    }
+    #cities_weather_container .cities-daily-scroll .city-day-col {
+      flex: 0 0 8.333%;
+      max-width: 8.333%;
+      min-width: 0;
+      width: auto;
+    }
   }
 </style>
 {% endblock extraheader  %}
@@ -99,7 +174,7 @@
                 <div class="d-flex align-items-center">
                   <i class="bi bi-house-fill me-2"></i>
                   <div>
-                    <small class="text-muted d-block">Notranja temperatura</small>
+                    <small class="text-muted d-block"><strong>IN</strong></small>
                     <strong><span id="inhouse_t"></span>°C</strong>
                   </div>
                 </div>
@@ -112,7 +187,7 @@
                 <div class="d-flex align-items-center">
                   <i class="bi bi-droplet me-2"></i>
                   <div>
-                    <small class="text-muted d-block">Vlažnost</small>
+                    <small class="text-muted d-block"><strong>IN</strong></small>
                     <strong><span id="inhouse_humidity"></span>%</strong>
                   </div>
                 </div>
@@ -125,7 +200,7 @@
                 <div class="d-flex align-items-center">
                   <i class="bi bi-cloud me-2"></i>
                   <div>
-                    <small class="text-muted d-block">Zunanja temperatura</small>
+                    <small class="text-muted d-block"><strong>OUT</strong></small>
                     <strong><span id="outside_t"></span>°C</strong>
                   </div>
                 </div>
@@ -268,6 +343,21 @@
 
   </div>
 
+  <!-- Stikala: floating button + offcanvas from the right -->
+  <button id="stikalaToggleBtn" class="btn btn-dark btn-lg stikala-toggle-btn" type="button" data-bs-toggle="offcanvas" data-bs-target="#lightsOffcanvas" aria-controls="lightsOffcanvas" title="Stikala">
+    <i class="bi bi-lightbulb"></i><span class="d-none d-sm-inline ms-2">Stikala</span>
+  </button>
+  <div class="offcanvas offcanvas-end" tabindex="-1" id="lightsOffcanvas" aria-labelledby="lightsOffcanvasLabel">
+    <div class="offcanvas-header">
+      <h5 class="offcanvas-title" id="lightsOffcanvasLabel">Stikala</h5>
+      <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body">
+      <div id="shelly_plugs_list">
+        <div class="text-muted text-center py-3">Nalagam...</div>
+      </div>
+    </div>
+  </div>
 
 <script>
   // Server availability tracking for Backend, Shelly and HVAC
@@ -720,7 +810,7 @@
       dailyCol.appendChild(cityTitle);
       
       var dailyContainer = document.createElement("div");
-      dailyContainer.className = "row";
+      dailyContainer.className = "cities-daily-scroll";
       dailyContainer.id = "home_weather_" + cityId;
       dailyCol.appendChild(dailyContainer);
       
@@ -937,7 +1027,7 @@
 
     for (let [date_, wd] of Object.entries(daily)){
       var row_col = document.createElement('div');
-      row_col.className = "col-sm-1";
+      row_col.className = "city-day-col";
       home_weather_div.appendChild(row_col);
 
       var day_card = document.createElement('div');
@@ -953,9 +1043,25 @@
       day_name.innerHTML = wd['day_name'];
       day_card_body.appendChild(day_name);
 
+      var day_date = document.createElement('p');
+      day_date.className = "card-text small text-muted mb-1";
+      day_date.style.cssText = "font-size: 0.7rem;";
+      try {
+        var d = new Date(date_ + "T12:00:00");
+        if (!isNaN(d.getTime())) {
+          day_date.textContent = d.toLocaleDateString(undefined, { day: "numeric", month: "short" });
+        } else {
+          day_date.textContent = date_;
+        }
+      } catch (e) {
+        day_date.textContent = date_;
+      }
+      day_card_body.appendChild(day_date);
+
       var day_image = document.createElement('img');
-      day_image.style = "max-height: 80px;";
+      day_image.style = "min-height: 45px; max-height: 45px; width: auto; object-fit: contain;";
       day_image.src = wd['icon'];
+      day_image.alt = "";
       day_card_body.appendChild(day_image);
 
       var day_temp = document.createElement('p');
@@ -1134,8 +1240,58 @@
   
   
 
+  // Stikala: poll plug status every 3s, render list, toggle sends request then refetch
+  var shellyPlugsStatus = [];
+
+  function renderShellyPlugsList() {
+    var container = document.getElementById('shelly_plugs_list');
+    if (!container) return;
+    if (shellyPlugsStatus.length === 0) {
+      container.innerHTML = '<div class="text-muted text-center py-3">Ni vtičnic. Dodajte jih v Nastavitve → Stikala.</div>';
+      return;
+    }
+    var html = '';
+    shellyPlugsStatus.forEach(function(p) {
+      var statusText = p.output === true ? 'Vključeno' : (p.output === false ? 'Izključeno' : '?');
+      var btnClass = p.output === true ? 'btn-success' : (p.output === false ? 'btn-secondary' : 'btn-outline-secondary');
+      var nextOn = p.output !== true;
+      html += '<div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">';
+      html += '<div><strong>' + (p.name || '') + '</strong><br><small class="text-muted">' + statusText + '</small></div>';
+      html += '<button type="button" class="btn btn-sm ' + btnClass + ' shelly-plug-toggle" data-index="' + p.index + '" data-on="' + nextOn + '">' + (nextOn ? 'Vključi' : 'Izključi') + '</button>';
+      html += '</div>';
+    });
+    container.innerHTML = html;
+    document.querySelectorAll('.shelly-plug-toggle').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var index = parseInt(this.getAttribute('data-index'), 10);
+        var on = this.getAttribute('data-on') === 'true';
+        setShellyPlug(index, on);
+      });
+    });
+  }
+
+  function fetchShellyPlugsStatus() {
+    $.get("{{ url_for('hvac_api.shelly_plugs_status') }}", {}, function(data, textStatus, jqXHR) {
+      if (jqXHR.status === 200 && data.plugs) {
+        shellyPlugsStatus = data.plugs;
+        renderShellyPlugsList();
+      }
+    }, 'json').fail(function() {
+      document.getElementById('shelly_plugs_list').innerHTML = '<div class="text-danger text-center py-3">Napaka pri nalaganju.</div>';
+    });
+  }
+
+  function setShellyPlug(index, on) {
+    $.post("{{ url_for('hvac_api.shelly_plug_set') }}", { index: index, on: on }, function(data) {
+      fetchShellyPlugsStatus();
+    }, 'json').fail(function() {
+      fetchShellyPlugsStatus();
+    });
+  }
+
   window.onload = function() {
     update_data();
+    fetchShellyPlugsStatus();
 
     setInterval(hvac_data, 5000);
     //setInterval(thermostat_data, 5000);
@@ -1143,6 +1299,19 @@
     setInterval(home_data, 300000);
     // Refresh Opozorila section every minute (60000 ms)
     setInterval(update_opozorila, 60000);
+    setInterval(fetchShellyPlugsStatus, 3000);
+
+    // Move Stikala button with offcanvas when it opens/closes
+    var offcanvasEl = document.getElementById('lightsOffcanvas');
+    var stikalaBtn = document.getElementById('stikalaToggleBtn');
+    if (offcanvasEl && stikalaBtn) {
+      offcanvasEl.addEventListener('shown.bs.offcanvas', function() {
+        stikalaBtn.style.right = offcanvasEl.offsetWidth + 'px';
+      });
+      offcanvasEl.addEventListener('hidden.bs.offcanvas', function() {
+        stikalaBtn.style.right = '';
+      });
+    }
   };
 </script>
 

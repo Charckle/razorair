@@ -122,6 +122,12 @@ class CityForm(FlaskForm):
     submit = SubmitField('Save City')
 
 
+class PlugForm(FlaskForm):
+    plug_name = StringField('Plug Name', [validators.InputRequired(), validators.Length(max=128)])
+    plug_ip = StringField('IP Address', [validators.InputRequired(), validators.Length(max=64)])
+    submit = SubmitField('Save Plug')
+
+
 class CalendarEventForm(FlaskForm):
     event_id = HiddenField('event_id')
     title = StringField('Title', [validators.InputRequired(), validators.Length(max=128)])
@@ -162,5 +168,6 @@ form_dicts = {"Weather": Weather,
               "Login": Login,
               "Configuration": Configuration,
               "City": CityForm,
+              "Plug": PlugForm,
               "CalendarEvent": CalendarEventForm
               } 

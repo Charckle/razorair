@@ -40,89 +40,7 @@
 <div class="container-fluid">
   <br>
   <div class="row">
-    <!-- Left Column: Event List -->
-    <div class="col-md-6">
-      <div class="d-flex justify-content-between align-items-center mb-3">
-        <h4 class="mb-0">Calendar Events - {{ current_year }}</h4>
-        <div class="btn-group" role="group" aria-label="Event filter">
-          <input type="radio" class="btn-check" name="eventFilter" id="filter-all" value="all" checked>
-          <label class="btn btn-outline-primary btn-sm" for="filter-all">
-            <i class="bi bi-list-ul"></i> All
-          </label>
-          
-          <input type="radio" class="btn-check" name="eventFilter" id="filter-regular" value="regular">
-          <label class="btn btn-outline-primary btn-sm" for="filter-regular">
-            <i class="bi bi-calendar-event"></i> Regular
-          </label>
-          
-          <input type="radio" class="btn-check" name="eventFilter" id="filter-recurring" value="recurring">
-          <label class="btn btn-outline-primary btn-sm" for="filter-recurring">
-            <i class="bi bi-arrow-repeat"></i> Recurring
-          </label>
-        </div>
-      </div>
-      <hr>
-      
-      <div id="events_list">
-        {% if events %}
-          {% for event in events %}
-          <div class="card event-card border-{{ event.color }}" id="event-{{ event.id }}" 
-               data-event-id="{{ event.id }}">
-            <div class="card-body">
-              <div class="d-flex justify-content-between align-items-start">
-                <div class="flex-grow-1" style="cursor: pointer;" onclick="window.location.href='{{ url_for('main_page_module.calendar_event_view', event_id=event.recurring_template_id if event.is_recurring else event.id) }}'">
-                  <div class="event-title text-{{ event.color }}">
-                    {% if event.is_recurring %}
-                      <i class="bi bi-arrow-repeat" title="Recurring event"></i> 
-                    {% endif %}
-                    {{ event.title }}
-                  </div>
-                  <div class="event-date">
-                    <i class="bi bi-calendar3"></i> 
-                    {{ event.date_start }}
-                    {% if event.time_start %}
-                      <i class="bi bi-clock ms-2"></i> {{ event.time_start }}
-                    {% endif %}
-                    {% if event.date_end != event.date_start %}
-                      - {{ event.date_end }}
-                    {% endif %}
-                    {% if event.time_end %}
-                      <i class="bi bi-clock ms-2"></i> {{ event.time_end }}
-                    {% endif %}
-                  </div>
-                  {% if event.description %}
-                  <div class="event-description mt-2">{{ event.description }}</div>
-                  {% endif %}
-                </div>
-                <div>
-                  <button class="btn btn-sm btn-outline-secondary edit-event-btn" data-event-id="{{ event.id }}">
-                    <i class="bi bi-pencil"></i>
-                  </button>
-                  <button class="btn btn-sm btn-outline-danger delete-event-btn" data-event-id="{{ event.id }}">
-                    <i class="bi bi-trash"></i>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-          {% endfor %}
-        {% else %}
-          <p class="text-muted" id="no-events-message">No events found. Add an event using the form on the right.</p>
-        {% endif %}
-      </div>
-      
-      <!-- Recurring Events Section (shown when filter is 'recurring') -->
-      <div id="recurring_templates_list" style="display: none;">
-        <hr>
-        <h5 class="mb-3"><i class="bi bi-arrow-repeat"></i> Recurring Event Templates</h5>
-        <p class="text-muted small mb-3">These are the templates for recurring events. Editing or deleting will affect all instances.</p>
-        <div id="recurring_templates_container">
-          <!-- Recurring templates will be rendered here by JavaScript -->
-        </div>
-      </div>
-    </div>
-    
-    <!-- Right Column: Add/Edit Event Form -->
+    <!-- Left Column: Add/Edit Event Form -->
     <div class="col-md-6">
       <!-- Archive Section - Always visible -->
       <div class="card mb-4">
@@ -228,6 +146,88 @@
             <button type="button" class="btn btn-secondary" id="cancel-btn" style="display: none;">Cancel</button>
           </div>
         </form>
+      </div>
+    </div>
+    
+    <!-- Right Column: Event List -->
+    <div class="col-md-6">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4 class="mb-0">Calendar Events - {{ current_year }}</h4>
+        <div class="btn-group" role="group" aria-label="Event filter">
+          <input type="radio" class="btn-check" name="eventFilter" id="filter-all" value="all" checked>
+          <label class="btn btn-outline-primary btn-sm" for="filter-all">
+            <i class="bi bi-list-ul"></i> All
+          </label>
+          
+          <input type="radio" class="btn-check" name="eventFilter" id="filter-regular" value="regular">
+          <label class="btn btn-outline-primary btn-sm" for="filter-regular">
+            <i class="bi bi-calendar-event"></i> Regular
+          </label>
+          
+          <input type="radio" class="btn-check" name="eventFilter" id="filter-recurring" value="recurring">
+          <label class="btn btn-outline-primary btn-sm" for="filter-recurring">
+            <i class="bi bi-arrow-repeat"></i> Recurring
+          </label>
+        </div>
+      </div>
+      <hr>
+      
+      <div id="events_list">
+        {% if events %}
+          {% for event in events %}
+          <div class="card event-card border-{{ event.color }}" id="event-{{ event.id }}" 
+               data-event-id="{{ event.id }}">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-start">
+                <div class="flex-grow-1" style="cursor: pointer;" onclick="window.location.href='{{ url_for('main_page_module.calendar_event_view', event_id=event.recurring_template_id if event.is_recurring else event.id) }}'">
+                  <div class="event-title text-{{ event.color }}">
+                    {% if event.is_recurring %}
+                      <i class="bi bi-arrow-repeat" title="Recurring event"></i> 
+                    {% endif %}
+                    {{ event.title }}
+                  </div>
+                  <div class="event-date">
+                    <i class="bi bi-calendar3"></i> 
+                    {{ event.date_start }}
+                    {% if event.time_start %}
+                      <i class="bi bi-clock ms-2"></i> {{ event.time_start }}
+                    {% endif %}
+                    {% if event.date_end != event.date_start %}
+                      - {{ event.date_end }}
+                    {% endif %}
+                    {% if event.time_end %}
+                      <i class="bi bi-clock ms-2"></i> {{ event.time_end }}
+                    {% endif %}
+                  </div>
+                  {% if event.description %}
+                  <div class="event-description mt-2">{{ event.description }}</div>
+                  {% endif %}
+                </div>
+                <div>
+                  <button class="btn btn-sm btn-outline-secondary edit-event-btn" data-event-id="{{ event.id }}">
+                    <i class="bi bi-pencil"></i>
+                  </button>
+                  <button class="btn btn-sm btn-outline-danger delete-event-btn" data-event-id="{{ event.id }}">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        {% else %}
+          <p class="text-muted" id="no-events-message">No events found. Add an event using the form on the left.</p>
+        {% endif %}
+      </div>
+      
+      <!-- Recurring Events Section (shown when filter is 'recurring') -->
+      <div id="recurring_templates_list" style="display: none;">
+        <hr>
+        <h5 class="mb-3"><i class="bi bi-arrow-repeat"></i> Recurring Event Templates</h5>
+        <p class="text-muted small mb-3">These are the templates for recurring events. Editing or deleting will affect all instances.</p>
+        <div id="recurring_templates_container">
+          <!-- Recurring templates will be rendered here by JavaScript -->
+        </div>
       </div>
     </div>
   </div>
@@ -433,7 +433,7 @@
     container.innerHTML = '';
     
     if (!recurringTemplates || recurringTemplates.length === 0) {
-      container.innerHTML = '<p class="text-muted">No recurring events found. Create a recurring event using the form on the right.</p>';
+      container.innerHTML = '<p class="text-muted">No recurring events found. Create a recurring event using the form on the left.</p>';
       return;
     }
     

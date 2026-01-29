@@ -18,6 +18,7 @@ from app.main_page_module.p_objects.systemair_server_connect import Sasc
 from app.main_page_module.p_objects.proxy_server_connect import ProxyServer
 from app.main_page_module.p_objects.thermostat import Thermo
 from app.main_page_module.p_objects.shelly_thermostat import ShellyThermostat
+from app.main_page_module.p_objects.shelly_plug import ShellyPlug
 
 
 from app import app, targets_ram
@@ -210,6 +211,61 @@ def shelly_thermostat_enable():
     except Exception as e:
         app.logger.error(f"Shelly thermostat error enabling/disabling: {e}")
         return jsonify({"error": str(e), "status": "error", "enabled": None}), 503
+
+
+@hvac_api.route('/shelly_plugs_status', methods=['GET'])
+@login_required
+def shelly_plugs_status():
+    """Return list of all plugs with name, ip, index, and output (on/off). output is null if unreachable."""
+    try:
+        plugs = Gears_obj.load_shelly_plugs()
+        result = []
+        for i, plug in enumerate(plugs):
+            name = plug.get("name", "")
+            ip = plug.get("ip", "")
+            output = None
+            try:
+                client = ShellyPlug(ip)
+                output = client.get_status()
+            except Exception:
+                pass
+            result.append({"index": i, "name": name, "ip": ip, "output": output})
+        return jsonify({"plugs": result}), 200
+    except Exception as e:
+        app.logger.error(f"Error getting shelly plugs status: {e}")
+        return jsonify({"error": str(e), "plugs": []}), 500
+
+
+@hvac_api.route('/shelly_plug_set', methods=['POST'])
+@login_required
+def shelly_plug_set():
+    """Set plug on/off. Expects form or JSON: index (int), on (true/false). Returns updated status."""
+    try:
+        if request.is_json:
+            data = request.get_json()
+            plug_index = int(data.get("index", -1))
+            on = data.get("on", False) in (True, "true", "1")
+        else:
+            plug_index = int(request.form.get("index", -1))
+            on = request.form.get("on", "false").lower() in ("true", "1")
+        plugs = Gears_obj.load_shelly_plugs()
+        if plug_index < 0 or plug_index >= len(plugs):
+            return jsonify({"error": "Invalid plug index"}), 400
+        plug = plugs[plug_index]
+        client = ShellyPlug(plug["ip"])
+        if not client.set_on(on):
+            return jsonify({"error": "Plug unreachable", "index": plug_index}), 503
+        output = client.get_status()
+        return jsonify({
+            "index": plug_index,
+            "name": plug["name"],
+            "ip": plug["ip"],
+            "output": output,
+            "message": "ok"
+        }), 200
+    except Exception as e:
+        app.logger.error(f"Error setting shelly plug: {e}")
+        return jsonify({"error": str(e)}), 500
 
     
 @hvac_api.route('/hvac_data_get', methods=['POST'])

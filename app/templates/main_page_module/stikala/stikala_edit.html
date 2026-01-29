@@ -1,0 +1,45 @@
+{% extends "main_page_module/base.html" %}
+
+{% block extraheader %}
+{% endblock extraheader  %}
+
+{% block nav_sett %}active{% endblock nav_sett %}
+{% block nav_stikala %}active{% endblock nav_stikala %}
+
+{% block content%}
+
+  <div class="container-fluid">
+    <br>
+    <div class="row">
+      <div class="col-sm-1"></div>
+      <div class="col-sm-10">
+        
+        <h4>{% if plug_index is defined %}Uredi{% else %}Dodaj{% endif %} vtičnico</h4>
+        <hr>
+        
+        <form method="POST" action="{% if plug_index is defined %}{{ url_for('main_page_module.stikala_edit', plug_index=plug_index) }}{% else %}{{ url_for('main_page_module.stikala_new') }}{% endif %}" accept-charset="UTF-8" role="form">
+          {{ form.csrf_token }}
+          
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label for="plug_name" class="form-label">Ime</label>
+              {{ form.plug_name(class="form-control", placeholder="npr. Soba, Kuhinja") }}
+            </div>
+            <div class="col-md-6">
+              <label for="plug_ip" class="form-label">IP naslov</label>
+              {{ form.plug_ip(class="form-control", placeholder="192.168.0.63") }}
+            </div>
+          </div>
+          
+          <div class="form-group">
+            {{ form.submit(class="btn btn-primary mb-2") }}
+            <a href="{{ url_for('main_page_module.stikala') }}" class="btn btn-secondary mb-2">Prekliči</a>
+          </div>
+        </form>
+
+      </div>
+      <div class="col-sm-1"></div>
+    </div>
+  </div>
+
+{% endblock content %}
