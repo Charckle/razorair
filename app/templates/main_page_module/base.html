@@ -68,6 +68,7 @@
               </a>
               <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="navbarSettingsDropdown">
                 <li><a class="dropdown-item" href="{{ url_for('main_page_module.settings_edit') }}"><i class="bi bi-gear"></i> Nastavitve</a></li>
+                <li><a class="dropdown-item {% block nav_cities %}{% endblock nav_cities %}" href="{{ url_for('main_page_module.weather_cities') }}"><i class="bi bi-geo-alt"></i> Vremenske lokacije</a></li>
                 <li><a class="dropdown-item {% block nav_stikala %}{% endblock nav_stikala %}" href="{{ url_for('main_page_module.stikala') }}"><i class="bi bi-plug"></i> Stikala</a></li>
               </ul>
             </li>

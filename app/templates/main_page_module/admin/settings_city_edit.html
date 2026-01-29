@@ -4,6 +4,7 @@
 {% endblock extraheader  %}
 
 {% block nav_sett %}active{% endblock nav_sett %}
+{% block nav_cities %}active{% endblock nav_cities %}
 
 {% block content%}
 
@@ -57,7 +58,7 @@
           
           <div class="form-group">
             {{ form.submit(class="btn btn-primary mb-2") }}
-            <a href="{{ url_for('main_page_module.settings_edit') }}" class="btn btn-secondary mb-2">Cancel</a>
+            <a href="{{ url_for('main_page_module.weather_cities') }}" class="btn btn-secondary mb-2">Cancel</a>
           </div>
         </form>
 

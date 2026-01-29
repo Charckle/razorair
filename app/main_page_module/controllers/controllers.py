@@ -279,13 +279,20 @@ def targets_delete(target_index:int):
         return redirect(url_for("main_page_module.targets_all"))        
 
 
+@main_page_module.route('/weather_cities', methods=['GET'])
+@login_required
+def weather_cities():
+    """Dedicated view for editing weather cities (daily forecast locations)."""
+    cities = Gears_obj.load_cities()
+    return render_template("main_page_module/admin/weather_cities.html", cities=cities)
+
+
 @main_page_module.route('/settings_edit/', methods=['POST', 'GET'])
 @login_required
 def settings_edit():
     form = form_dicts["Configuration"]()
     
     try:
-        cities = Gears_obj.load_cities()
         app_config = Gears_obj.load_app_config()
         current_lat = app_config.get("current_location_latitude", "")
         current_long = app_config.get("current_location_longitude", "")
@@ -341,9 +348,7 @@ def settings_edit():
         for error in errors:
             flash(f'Invalid Data for {field}: {error}', 'error')    
             
-    return render_template("main_page_module/admin/settings_edit.html", 
-                         form=form, 
-                         cities=cities)
+    return render_template("main_page_module/admin/settings_edit.html", form=form)
 
 
 @main_page_module.route('/settings_city_new', methods=['GET', 'POST'])
@@ -364,7 +369,7 @@ def settings_city_new():
             Gears_obj.save_cities(cities)
             
             flash("City added successfully.", 'success')
-            return redirect(url_for("main_page_module.settings_edit"))
+            return redirect(url_for("main_page_module.weather_cities"))
         except ValueError:
             flash('Invalid latitude or longitude values.', 'error')
         except Exception as e:
@@ -384,7 +389,7 @@ def settings_city_edit(city_index):
         
         if city_index >= len(cities):
             flash("City not found.", 'error')
-            return redirect(url_for("main_page_module.settings_edit"))
+            return redirect(url_for("main_page_module.weather_cities"))
         
         city = cities[city_index]
         
@@ -404,7 +409,7 @@ def settings_city_edit(city_index):
                 Gears_obj.save_cities(cities)
                 
                 flash("City updated successfully.", 'success')
-                return redirect(url_for("main_page_module.settings_edit"))
+                return redirect(url_for("main_page_module.weather_cities"))
             except ValueError:
                 flash('Invalid latitude or longitude values.', 'error')
             except Exception as e:
@@ -413,7 +418,7 @@ def settings_city_edit(city_index):
     except Exception as e:
         app.logger.error(f"Error: {e}")
         flash('Error loading city.', 'error')
-        return redirect(url_for("main_page_module.settings_edit"))
+        return redirect(url_for("main_page_module.weather_cities"))
     
     return render_template("main_page_module/admin/settings_city_edit.html", form=form, city_index=city_index)
 
@@ -434,7 +439,7 @@ def settings_city_delete(city_index):
         app.logger.error(f"Error deleting city: {e}")
         flash('Error deleting city.', 'error')
     
-    return redirect(url_for("main_page_module.settings_edit"))
+    return redirect(url_for("main_page_module.weather_cities"))
 
 
 # Stikala (Shelly plugs) - list, add, edit, delete
