@@ -48,6 +48,11 @@
           <h5 class="mb-0"><i class="bi bi-archive"></i> Archive</h5>
         </div>
         <div class="card-body">
+          <p class="text-muted small mb-2">
+            <a href="{{ url_for('main_page_module.calendar_recurring') }}">
+              <i class="bi bi-arrow-repeat"></i> Manage recurring events
+            </a>
+          </p>
           {% if archive_years %}
             <p class="text-muted small mb-2">View events from previous years:</p>
             <div class="d-flex flex-wrap gap-2">

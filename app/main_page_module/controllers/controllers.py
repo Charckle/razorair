@@ -158,6 +158,15 @@ def calendar_archive(year):
                          archive_years=archive_years)
 
 
+@main_page_module.route('/calendar/recurring', methods=['GET'])
+@login_required
+def calendar_recurring():
+    """View and edit core recurring event templates only"""
+    recurring_events = Gears_obj.load_recurring_events()
+    return render_template("main_page_module/calendar_recurring.html",
+                         recurring_events=recurring_events)
+
+
 @main_page_module.route('/radar', methods=['GET'])
 #@login_required
 def radar():
